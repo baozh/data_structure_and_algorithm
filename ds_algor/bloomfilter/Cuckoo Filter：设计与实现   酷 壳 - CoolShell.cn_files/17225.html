@@ -1,0 +1,2157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head profile="http://gmpg.org/xfn/11">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+
+	<title>Cuckoo Filter：设计与实现 | 酷 壳 - CoolShell.cn</title>
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0 - 所有文章" href="http://coolshell.cn/feed" />
+	<link rel="alternate" type="application/rss+xml" title="RSS 2.0 - 所有评论" href="http://coolshell.cn/comments/feed" />
+	<link rel="pingback" href="http://coolshell.cn/xmlrpc.php" />
+
+	<!-- style START -->
+	<!-- default style -->
+	<style type="text/css" media="screen">@import url( http://coolshell.cn/wp-content/themes/inove/style.css );</style>
+	<link rel='stylesheet' id='open-sans-css'  href='http://coolshell.cn//wp-includes/css/google-font.css?ver=3.9.1' type='text/css' media='all' />
+	<!-- for translations -->
+			<link rel="stylesheet" href="http://coolshell.cn//wp-content/themes/inove/chinese.css" type="text/css" media="screen" />
+		<!--[if IE]>
+		<link rel="stylesheet" href="http://coolshell.cn//wp-content/themes/inove/ie.css" type="text/css" media="screen" />
+	<![endif]-->
+	<!-- style END -->
+
+	<!-- script START -->
+	<script type="text/javascript" src="http://coolshell.cn//wp-content/themes/inove/js/base.js"></script>
+	<script type="text/javascript" src="http://coolshell.cn//wp-content/themes/inove/js/menu.js"></script>
+	<!-- script END -->
+
+	
+<!-- All in One SEO Pack 2.2.7.6.2 by Michael Torbert of Semper Fi Web Design[326,385] -->
+<link rel="author" href="http://begeekmyfriend@gmail.com" />
+<meta name="keywords"  content="algorithm,filter,hashing,海量数据,c/c++语言,数据库,程序设计,趣味问题" />
+
+<link rel="canonical" href="http://coolshell.cn/articles/17225.html" />
+<meta property="og:title" content="Cuckoo Filter：设计与实现 | 酷 壳 - CoolShell.cn" />
+<meta property="og:type" content="activity" />
+<meta property="og:url" content="http://coolshell.cn/articles/17225.html" />
+<meta property="og:image" content="http://coolshell.cn//wp-content/plugins/all-in-one-seo-pack/images/default-user-image.png" />
+<meta property="og:site_name" content="酷 壳 - CoolShell.cn" />
+<meta property="og:description" content="（感谢网友 @我的上铺叫路遥 投稿）  对于海量数据处理业务，我们通常需要一个索引数据结构，用来帮助查询，快速判断数据记录是否存在，这种数据结构通常又叫过滤器(filter)。考虑这样一个场景，上网的时候需要在浏览器上输入URL，这时浏览器需要去判断这是否一个恶意的网站，它将对本地缓存的成千上万的URL索引进行过滤，如果不存在，就放行，如果（可能）存在，则向远程服务端发起验证请求，并回馈客户端给出警告。 索引的存储又分为有序和无序，前者使用关联式容器，比如B树，后者使用哈希算法。这两类算法各有优劣：比如，关联式容器时间复杂度稳定O(logN)，且支持范围查询；又比如哈希算法的查询、增删都比较快O(1)，但这是在理想状态下的情形，遇到碰撞严重的情况，哈希算法的时间复杂度会退化到O(n)。因此，选择一个好的哈希算法是很重要的。 时下一个非常流行的哈希索引结构就是bloom filter，它类似于bitmap这样的hashset，所以空间利用率很高。其独特的地方在于它使用多个哈希函数来避免哈希碰撞，如图所示（来源wikipedia），bit数组初始化为全0，插入x时，x被3个哈希函数分别映射到3个不同的bit位上并置1，查询x时，只有被这3个函数映射到的bit位全部是1才能说明x可能存在，但凡至少出现一个0表示x肯定不存在。   但是，bloom filter的这种位图模式带来两个问题：一个是误报（false positives），在查询时能提供“一定不存在”，但只能提供“可能存在”，因为存在其它元素被映射到部分相同bit位上，导致该位置1，那么一个不存在的元素可能会被误报成存在；另一个是漏报（false nagatives），同样道理，如果删除了某个元素，导致该映射bit位被置0，那么本来存在的元素会被漏报成不存在。由于后者问题严重得多，所以bloom filter必须确保“definitely no”从而容忍“probably yes”，不允许元素的删除。 关于元素删除的问题，一个改良方案是对bloom filter引入计数，但这样一来，原来每个bit空间就要扩张成一个计数值，空间效率上又降低了。 Cuckoo Hashing 为了解决这一问题，本文引入了一种新的哈希算法——cuckoo" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Cuckoo Filter：设计与实现 | 酷 壳 - CoolShell.cn" />
+<meta name="twitter:description" content="（感谢网友 @我的上铺叫路遥 投稿）  对于海量数据处理业务，我们通常需要一个索引数据结构，用来帮助查询，快速判断数据记录是否存在，这种数据结构通常又叫过滤器(filter)。考虑这样一个场景，上网的时候需要在浏览器上输入URL，这时浏览器需要去判断这是否一个恶意的网站，它将对本地缓存的成千上万的URL索引进行过滤，如果不存在，就放行，如果（可能）存在，则向远程服务端发起验证请求，并回馈客户端给出警告。 索引的存储又分为有序和无序，前者使用关联式容器，比如B树，后者使用哈希算法。这两类算法各有优劣：比如，关联式容器时间复杂度稳定O(logN)，且支持范围查询；又比如哈希算法的查询、增删都比较快O(1)，但这是在理想状态下的情形，遇到碰撞严重的情况，哈希算法的时间复杂度会退化到O(n)。因此，选择一个好的哈希算法是很重要的。 时下一个非常流行的哈希索引结构就是bloom filter，它类似于bitmap这样的hashset，所以空间利用率很高。其独特的地方在于它使用多个哈希函数来避免哈希碰撞，如图所示（来源wikipedia），bit数组初始化为全0，插入x时，x被3个哈希函数分别映射到3个不同的bit位上并置1，查询x时，只有被这3个函数映射到的bit位全部是1才能说明x可能存在，但凡至少出现一个0表示x肯定不存在。   但是，bloom filter的这种位图模式带来两个问题：一个是误报（false positives），在查询时能提供“一定不存在”，但只能提供“可能存在”，因为存在其它元素被映射到部分相同bit位上，导致该位置1，那么一个不存在的元素可能会被误报成存在；另一个是漏报（false nagatives），同样道理，如果删除了某个元素，导致该映射bit位被置0，那么本来存在的元素会被漏报成不存在。由于后者问题严重得多，所以bloom filter必须确保“definitely no”从而容忍“probably yes”，不允许元素的删除。 关于元素删除的问题，一个改良方案是对bloom filter引入计数，但这样一来，原来每个bit空间就要扩张成一个计数值，空间效率上又降低了。 Cuckoo Hashing 为了解决这一问题，本文引入了一种新的哈希算法——cuckoo" />
+<meta name="twitter:image" content="http://coolshell.cn//wp-content/plugins/all-in-one-seo-pack/images/default-user-image.png" />
+<!-- /all in one seo pack -->
+<link rel="alternate" type="application/rss+xml" title="酷 壳 - CoolShell.cn &raquo; Cuckoo Filter：设计与实现评论Feed" href="http://coolshell.cn/articles/17225.html/feed" />
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/coolshell.cn\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.4.2"}};
+			!function(a,b,c){function d(a){var c,d=b.createElement("canvas"),e=d.getContext&&d.getContext("2d"),f=String.fromCharCode;return e&&e.fillText?(e.textBaseline="top",e.font="600 32px Arial","flag"===a?(e.fillText(f(55356,56806,55356,56826),0,0),d.toDataURL().length>3e3):"diversity"===a?(e.fillText(f(55356,57221),0,0),c=e.getImageData(16,16,1,1).data.toString(),e.fillText(f(55356,57221,55356,57343),0,0),c!==e.getImageData(16,16,1,1).data.toString()):("simple"===a?e.fillText(f(55357,56835),0,0):e.fillText(f(55356,57135),0,0),0!==e.getImageData(16,16,1,1).data[0])):!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g;c.supports={simple:d("simple"),flag:d("flag"),unicode8:d("unicode8"),diversity:d("diversity")},c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.simple&&c.supports.flag&&c.supports.unicode8&&c.supports.diversity||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style>
+<link rel='stylesheet' id='wp-postratings-css'  href='http://coolshell.cn//wp-content/plugins/wp-postratings/postratings-css.css?ver=1.83' type='text/css' media='all' />
+<link rel='stylesheet' id='wp-pagenavi-css'  href='http://coolshell.cn//wp-content/themes/inove/pagenavi-css.css?ver=2.70' type='text/css' media='all' />
+<script type='text/javascript' src='http://coolshell.cn//wp-includes/js/jquery/jquery.js?ver=1.11.3'></script>
+<script type='text/javascript' src='http://coolshell.cn//wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1'></script>
+<link rel='https://api.w.org/' href='http://coolshell.cn/wp-json/' />
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://coolshell.cn/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://coolshell.cn//wp-includes/wlwmanifest.xml" /> 
+<link rel='prev' title='Docker基础技术：DeviceMapper' href='http://coolshell.cn/articles/17200.html' />
+<link rel='next' title='让我们来谈谈分工' href='http://coolshell.cn/articles/17295.html' />
+<meta name="generator" content="WordPress 4.4.2" />
+<link rel='shortlink' href='http://coolshell.cn/?p=17225' />
+<link rel="alternate" type="application/json+oembed" href="http://coolshell.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fcoolshell.cn%2Farticles%2F17225.html" />
+<link rel="alternate" type="text/xml+oembed" href="http://coolshell.cn/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fcoolshell.cn%2Farticles%2F17225.html&#038;format=xml" />
+	<link href="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Styles/SyntaxHighlighter.css" type="text/css" rel="stylesheet" />
+			<script type="text/javascript">
+            var _statcounter = _statcounter || [];
+            _statcounter.push({"tags": {"author": "Leo"}});
+        </script>
+	   <script type="text/javascript">
+	window._wp_rp_static_base_url = 'https://wprp.zemanta.com/static/';
+	window._wp_rp_wp_ajax_url = "http://coolshell.cn/wp-admin/admin-ajax.php";
+	window._wp_rp_plugin_version = '3.6';
+	window._wp_rp_post_id = '17225';
+	window._wp_rp_num_rel_posts = '8';
+	window._wp_rp_thumbnails = false;
+	window._wp_rp_post_title = 'Cuckoo+Filter%EF%BC%9A%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0';
+	window._wp_rp_post_tags = ['%E6%B5%B7%E9%87%8F%E6%95%B0%E6%8D%AE', 'filter', 'hashing', 'algorithm', '%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1', 'c%2Fc%2B%2B%E8%AF%AD%E8%A8%80', '%E8%B6%A3%E5%91%B3%E9%97%AE%E9%A2%98', '%E6%95%B0%E6%8D%AE%E5%BA%93', 'size', 'fit', 'entri', 'filter', 'hash', '2', 'bucket', 'map', 'kei', 'cuckoo', 'alt', '30', 'flash', 'store', 'cach'];
+	window._wp_rp_promoted_content = false;
+</script>
+<script type="text/javascript" src="https://wprp.zemanta.com/static/js/loader.js?version=3.6" async></script>
+<style type="text/css" id="syntaxhighlighteranchor"></style>
+</head>
+
+
+<body>
+<!-- wrap START -->
+<div id="wrap">
+
+<!-- container START -->
+<div id="container"  >
+
+<!-- header START -->
+<div id="header">
+
+	<!-- banner START -->
+			<div class="banner">
+			<a title="把这个链接拖到你的Chrome收藏夹工具栏中" href='javascript:(function(){function c(){var e=document.createElement("link");e.setAttribute("type","text/css");e.setAttribute("rel","stylesheet");e.setAttribute("href",f);e.setAttribute("class",l);document.body.appendChild(e)}function h(){var e=document.getElementsByClassName(l);for(var t=0;t<e.length;t++){document.body.removeChild(e[t])}}function p(){var e=document.createElement("div");e.setAttribute("class",a);document.body.appendChild(e);setTimeout(function(){document.body.removeChild(e)},100)}function d(e){return{height:e.offsetHeight,width:e.offsetWidth}}function v(i){var s=d(i);return s.height>e&&s.height<n&&s.width>t&&s.width<r}function m(e){var t=e;var n=0;while(!!t){n+=t.offsetTop;t=t.offsetParent}return n}function g(){var e=document.documentElement;if(!!window.innerWidth){return window.innerHeight}else if(e&&!isNaN(e.clientHeight)){return e.clientHeight}return 0}function y(){if(window.pageYOffset){return window.pageYOffset}return Math.max(document.documentElement.scrollTop,document.body.scrollTop)}function E(e){var t=m(e);return t>=w&&t<=b+w}function S(){var e=document.createElement("audio");e.setAttribute("class",l);e.src=i;e.loop=false;e.addEventListener("canplay",function(){setTimeout(function(){x(k)},500);setTimeout(function(){N();p();for(var e=0;e<O.length;e++){T(O[e])}},15500)},true);e.addEventListener("ended",function(){N();h()},true);e.innerHTML=" <p>If you are reading this, it is because your browser does not support the audio element. We recommend that you get a new browser.</p> <p>";document.body.appendChild(e);e.play()}function x(e){e.className+=" "+s+" "+o}function T(e){e.className+=" "+s+" "+u[Math.floor(Math.random()*u.length)]}function N(){var e=document.getElementsByClassName(s);var t=new RegExp("\\b"+s+"\\b");for(var n=0;n<e.length;){e[n].className=e[n].className.replace(t,"")}}var e=30;var t=30;var n=350;var r=350;var i="//s3.amazonaws.com/moovweb-marketing/playground/harlem-shake.mp3";var s="mw-harlem_shake_me";var o="im_first";var u=["im_drunk","im_baked","im_trippin","im_blown"];var a="mw-strobe_light";var f="//s3.amazonaws.com/moovweb-marketing/playground/harlem-shake-style.css";var l="mw_added_css";var b=g();var w=y();var C=document.getElementsByTagName("*");var k=null;for(var L=0;L<C.length;L++){var A=C[L];if(v(A)){if(E(A)){k=A;break}}}if(A===null){console.warn("Could not find a node of the right size. Please try a different page.");return}c();S();var O=[];for(var L=0;L<C.length;L++){var A=C[L];if(v(A)){O.push(A)}}})()    '>High一下!</a>		</div>
+		<!-- banner END -->
+
+	<div id="caption">
+		<h1 id="title"><a href="http://coolshell.cn/">酷 壳 &#8211; CoolShell.cn</a></h1>
+		<div id="tagline">享受编程和技术所带来的快乐 &#8211; http://coolshell.cn</div>
+	</div>
+
+	<div class="fixed"></div>
+</div>
+<!-- header END -->
+
+<!-- navigation START -->
+<div id="navigation">
+	<!-- menus START -->
+	<ul id="menus">
+		<li class="page_item"><a class="home" title="首页" href="http://coolshell.cn/">首页</a></li>
+		<li class="page_item page-item-4194"><a href="http://coolshell.cn/featured_posts">推荐文章</a></li>
+<li class="page_item page-item-3839"><a href="http://coolshell.cn/plugins">本站插件</a></li>
+<li class="page_item page-item-2"><a href="http://coolshell.cn/guestbook">留言小本</a></li>
+<li class="page_item page-item-368"><a href="http://coolshell.cn/about">关于酷壳</a></li>
+<li class="page_item page-item-4470"><a href="http://coolshell.cn/haoel">关于陈皓</a></li>
+		<li><a class="lastmenu" href="javascript:void(0);"></a></li>
+	</ul>
+	<!-- menus END -->
+
+	<!-- searchbox START -->
+	<div id="searchbox">
+					<form action="http://coolshell.cn" method="get">
+				<div class="content">
+					<input type="text" class="textfield" name="s" size="24" value="" />
+					<input type="submit" class="button" value="" />
+				</div>
+			</form>
+			</div>
+<script type="text/javascript">
+//<![CDATA[
+	var searchbox = MGJS.$("searchbox");
+	var searchtxt = MGJS.getElementsByClassName("textfield", "input", searchbox)[0];
+	var searchbtn = MGJS.getElementsByClassName("button", "input", searchbox)[0];
+	var tiptext = "请输入关键字...";
+	if(searchtxt.value == "" || searchtxt.value == tiptext) {
+		searchtxt.className += " searchtip";
+		searchtxt.value = tiptext;
+	}
+	searchtxt.onfocus = function(e) {
+		if(searchtxt.value == tiptext) {
+			searchtxt.value = "";
+			searchtxt.className = searchtxt.className.replace(" searchtip", "");
+		}
+	}
+	searchtxt.onblur = function(e) {
+		if(searchtxt.value == "") {
+			searchtxt.className += " searchtip";
+			searchtxt.value = tiptext;
+		}
+	}
+	searchbtn.onclick = function(e) {
+		if(searchtxt.value == "" || searchtxt.value == tiptext) {
+			return false;
+		}
+	}
+//]]>
+</script>
+	<!-- searchbox END -->
+
+	<div class="fixed"></div>
+</div>
+<!-- navigation END -->
+
+<!-- content START -->
+<div id="content">
+
+	<!-- main START -->
+	<div id="main">
+
+
+	<div id="postpath">
+		<a title="转到首页" href="http://coolshell.cn/">首页</a>
+		 &gt; <a href="http://coolshell.cn/category/proglanguage/cplusplus" rel="category tag">C/C++语言</a>, <a href="http://coolshell.cn/category/datebase" rel="category tag">数据库</a>, <a href="http://coolshell.cn/category/progdesign" rel="category tag">程序设计</a>, <a href="http://coolshell.cn/category/funny" rel="category tag">趣味问题</a>		 &gt; Cuckoo Filter：设计与实现	</div>
+
+	<div class="post" id="post-17225">
+		<h2>Cuckoo Filter：设计与实现</h2>
+		<div class="info">
+			<span class="date">2015年9月2日</span>
+			<span class="author"><a href="http://coolshell.cn/articles/author/full_of_bull" title="由Leo发布" rel="author">Leo</a></span>										<span class="addcomment"><a href="#respond">发表评论</a></span>
+				<span class="comments"><a href="#comments">阅读评论</a></span>
+						<span class="comments"> 19,585 人阅读  &nbsp;  &nbsp;</span>
+			<div class="fixed"></div>
+		</div>
+		<div class="content">
+			<p><strong>（感谢网友 </strong><a href="http://weibo.com/fullofbull" target="_blank"><strong>@我的上铺叫路遥</strong></a><strong> 投稿）</strong></p>
+<p><img class="alignright wp-image-17243 size-medium" src="http://coolshell.cn//wp-content/uploads/2015/08/cuckoo-300x164.jpg" alt="" width="300" height="164" srcset="http://coolshell.cn//wp-content/uploads/2015/08/cuckoo-300x164.jpg 300w, http://coolshell.cn//wp-content/uploads/2015/08/cuckoo.jpg 400w" sizes="(max-width: 300px) 100vw, 300px" /></p>
+<p>对于海量数据处理业务，我们通常需要一个索引数据结构，用来帮助查询，快速判断数据记录是否存在，这种数据结构通常又叫过滤器(filter)。考虑这样一个场景，上网的时候需要在浏览器上输入URL，这时浏览器需要去判断这是否一个恶意的网站，它将对本地缓存的成千上万的URL索引进行过滤，如果不存在，就放行，如果（可能）存在，则向远程服务端发起验证请求，并回馈客户端给出警告。</p>
+<p>索引的存储又分为有序和无序，前者使用关联式容器，比如B树，后者使用哈希算法。这两类算法各有优劣：比如，关联式容器时间复杂度稳定O(logN)，且支持范围查询；又比如哈希算法的查询、增删都比较快O(1)，但这是在理想状态下的情形，遇到碰撞严重的情况，哈希算法的时间复杂度会退化到O(n)。因此，选择一个好的哈希算法是很重要的。</p>
+<p>时下一个非常流行的哈希索引结构就是<strong><a href="https://en.wikipedia.org/wiki/Bloom_filter" target="_blank">bloom filter</a></strong>，它类似于bitmap这样的hashset，所以空间利用率很高。其独特的地方在于它使用多个哈希函数来避免哈希碰撞，如图所示（<a href="https://en.wikipedia.org/wiki/Bloom_filter" target="_blank">来源wikipedia</a>），bit数组初始化为全0，插入x时，x被3个哈希函数分别映射到3个不同的bit位上并置1，查询x时，只有被这3个函数映射到的bit位全部是1才能说明x可能存在，但凡至少出现一个0表示x肯定不存在。</p>
+<p><img class="aligncenter size-full wp-image-17242" src="http://coolshell.cn//wp-content/uploads/2015/08/Bloom_filter.png" alt="Bloom_filter" width="649" height="233" srcset="http://coolshell.cn//wp-content/uploads/2015/08/Bloom_filter-300x108.png 300w, http://coolshell.cn//wp-content/uploads/2015/08/Bloom_filter.png 649w" sizes="(max-width: 649px) 100vw, 649px" /></p>
+<p><span id="more-17225"></span></p>
+<p>但是，bloom filter的这种位图模式带来两个问题：一个是<strong>误报（false positives）</strong>，在查询时能提供“一定不存在”，但只能提供“可能存在”，因为存在其它元素被映射到部分相同bit位上，导致该位置1，那么一个不存在的元素可能会被误报成存在；另一个是<strong>漏报（false nagatives）</strong>，同样道理，如果删除了某个元素，导致该映射bit位被置0，那么本来存在的元素会被漏报成不存在。由于后者问题严重得多，所以bloom filter必须确保“definitely no”从而容忍“probably yes”，不允许元素的删除。</p>
+<p>关于元素删除的问题，一个改良方案是对bloom filter引入计数，但这样一来，原来每个bit空间就要扩张成一个计数值，空间效率上又降低了。</p>
+<h4>Cuckoo Hashing</h4>
+<p>为了解决这一问题，本文引入了一种新的哈希算法——<strong>cuckoo filter</strong>，它既可以确保该元素存在的必然性，又可以在不违背此前提下删除任意元素，仅仅比bitmap牺牲了微量空间效率。先说明一下，这个算法的思想来源是一篇<a href="http://www.cs.cmu.edu/~binfan/papers/conext14_cuckoofilter.pdf" target="_blank">CMU论文</a>，笔者按照其思路用C语言做了一个简单实现（<a href="https://github.com/begeekmyfriend/CuckooFilter" target="_blank">Github</a>），附上对一段文本数据进行导入导出的正确性测试。</p>
+<p>接下来我会结合自己的示例代码讲解哈希算法的实现。我们先来看看cuckoo hashing有什么特点，它的哈希函数是成对的（具体的实现可以根据需求设计），每一个元素都是两个，分别映射到两个位置，一个是记录的位置，另一个是备用位置。这个备用位置是处理碰撞时用的，这就要说到cuckoo这个名词的典故了，中文名叫布谷鸟，这种鸟有一种即狡猾又贪婪的习性，它不肯自己筑巢，而是把蛋下到别的鸟巢里，而且它的幼鸟又会比别的鸟早出生，布谷幼鸟天生有一种残忍的动作，幼鸟会拼命把未出生的其它鸟蛋挤出窝巢，今后以便独享“养父母”的食物。借助生物学上这一典故，cuckoo hashing处理碰撞的方法，就是把原来占用位置的这个元素踢走，不过被踢出去的元素还要比鸟蛋幸运，因为它还有一个备用位置可以安置，如果备用位置上还有人，再把它踢走，如此往复。直到被踢的次数达到一个上限，才确认哈希表已满，并执行rehash操作。如下图所示（<a href="http://codecapsule.com/2013/07/20/cuckoo-hashing/" target="_blank">图片来源</a>）：</p>
+<p><a href="http://codecapsule.com/2013/07/20/cuckoo-hashing/"><img class="aligncenter size-full wp-image-17244" src="http://coolshell.cn//wp-content/uploads/2015/08/cuckoo_preview.jpg" alt="cuckoo_preview" width="720" height="326" srcset="http://coolshell.cn//wp-content/uploads/2015/08/cuckoo_preview-300x136.jpg 300w, http://coolshell.cn//wp-content/uploads/2015/08/cuckoo_preview.jpg 720w" sizes="(max-width: 720px) 100vw, 720px" /></a></p>
+<p>&nbsp;</p>
+<p>我们不禁要问发生哈希碰撞之前的空间利用率是多少呢？不幸地告诉你，一维数组的哈希表上跟其它哈希函数没什么区别，也就50%而已。但如果是二维的呢？</p>
+<p>一个改进的哈希表如下图所示，每个桶（bucket）有4路槽位（slot）。当哈希函数映射到同一个bucket中，在其它三路slot未被填满之前，是不会有元素被踢的，这大大缓冲了碰撞的几率。笔者自己的简单实现上测过，采用二维哈希表（4路slot）大约80%的占用率（CMU论文数据据说达到90%以上，应该是扩大了slot关联数目所致）。</p>
+<p><img class="aligncenter wp-image-17241" src="http://coolshell.cn//wp-content/uploads/2015/08/cuckoo-hashing-1024x392.png" alt="cuckoo hashing" width="650" height="249" srcset="http://coolshell.cn//wp-content/uploads/2015/08/cuckoo-hashing-300x115.png 300w, http://coolshell.cn//wp-content/uploads/2015/08/cuckoo-hashing-1024x392.png 1024w, http://coolshell.cn//wp-content/uploads/2015/08/cuckoo-hashing-900x344.png 900w, http://coolshell.cn//wp-content/uploads/2015/08/cuckoo-hashing.png 1143w" sizes="(max-width: 650px) 100vw, 650px" /></p>
+<h4>Cuckoo Filter设计与实现</h4>
+<p>cuckoo hashing的原理介绍完了，下面就来演示一下笔者自己实现的一个cuckoo filter应用，简单易用为主，不到500行C代码。应用场景是这样的：假设有一段文本数据，我们把它通过cuckoo filter导入到一个虚拟的flash中，再把它导出到另一个文本文件中。flash存储的单元页面是一个log_entry，里面包含了一对key/value，value就是文本数据，key就是这段大小的数据的SHA1值（照理说SHA1是可以通过数据源生成，没必要存储到flash，但这里主要为了测试而故意设计的，万一key和value之间没有推导关系呢）。</p>
+<pre class="brush: cpp; title: ; notranslate" title="">
+#define SECTOR_SIZE    (1 &lt;&lt; 10)
+#define DAT_LEN        (SECTOR_SIZE - 20)  /* minus sha1 size */
+
+/* The log entries store key-value pairs on flash and the
+ * size of each entry is assumed just one sector fit.
+ */
+struct log_entry {
+        uint8_t sha1[20];
+        uint8_t data[DAT_LEN];
+};
+</pre>
+<p>顺便说明一下DAT_LEN设置，之前我们设计了一个虚拟flash（用malloc模拟出来），由于flash的单位是按页大小SECTOR_SIZE读写，这里假设每个log_entry正好一个页大小，当然可以根据实际情况调整。</p>
+<p>以上是flash的存储结构，至于哈希表里的slot有三个成员tag，status和offset，分别是哈希值，状态值和在flash的偏移位置。其中status有三个枚举值：AVAILIBLE，OCCUPIED，DELETED，分别表示这个slot是空闲的，占用的还是被删除的。至于tag，按理说应该有两个哈希值，对应两个哈希函数，但其中一个已经对应bucket的位置上了，所以我们只要保存另一个备用bucket的位置就行了，这样万一被踢，只要用这个tag就可以找到它的另一个安身之所。</p>
+<pre class="brush: cpp; title: ; notranslate" title="">
+enum { AVAILIBLE, OCCUPIED, DELETED, };
+
+/* The in-memory hash bucket cache is to filter keys (which is assumed SHA1) via
+ * cuckoo hashing function and map keys to log entries stored on flash.
+ */
+struct hash_slot_cache {
+        uint32_t tag : 30;  /* summary of key */
+        uint32_t status : 2;  /* FSM */
+        uint32_t offset;  /* offset on flash memory */
+};
+</pre>
+<p>乍看之下size有点大是吗？没关系，你也可以根据情况调整数据类型大小，比如uint16_t，这里仅仅为了测试正确性。</p>
+<p>至于哈希表以及bucket和slot的创建见初始化代码。buckets是一个二级指针，每个bucket指向4个slot大小的缓存，即4路slot，那么bucket_num也就是slot_num的1/4。这里我们故意把slot_num调小了点，为的是测试rehash的发生。</p>
+<pre class="brush: cpp; title: ; notranslate" title="">
+#define ASSOC_WAY  (4)  /* 4-way association */
+
+struct hash_table {
+    struct hash_slot_cache **buckets;
+    struct hash_slot_cache *slots;
+    uint32_t slot_num;
+    uint32_t bucket_num;
+};
+
+int cuckoo_filter_init(size_t size)
+{
+    ...
+    /* Allocate hash slots */
+    hash_table.slot_num = nvrom_size / SECTOR_SIZE;
+    /* Make rehashing happen */
+    hash_table.slot_num /= 4;
+    hash_table.slots = calloc(hash_table.slot_num, sizeof(struct hash_slot_cache));
+    if (hash_table.slots == NULL) {
+        return -1;
+    }
+
+    /* Allocate hash buckets associated with slots */
+    hash_table.bucket_num = hash_table.slot_num / ASSOC_WAY;
+    hash_table.buckets = malloc(hash_table.bucket_num * sizeof(struct hash_slot_cache *));
+    if (hash_table.buckets == NULL) {
+        free(hash_table.slots);
+        return -1;
+    }
+    for (i = 0; i &lt; hash_table.bucket_num; i++) {
+        hash_table.buckets[i] = &amp;hash_table.slots[i * ASSOC_WAY];
+    }
+}
+</pre>
+<p>下面是哈希函数的设计，这里有两个，前面提到既然key是20字节的SHA1值，我们就可以分别是对key的低32位和高32位进行位运算，只要bucket_num满足2的幂次方，我们就可以将key的一部分同bucket_num &#8211; 1相与，就可以定位到相应的bucket位置上，注意bucket_num随着rehash而增大，哈希函数简单的好处是求哈希值十分快。</p>
+<pre class="brush: cpp; title: ; notranslate" title="">
+#define cuckoo_hash_lsb(key, count)  (((size_t *)(key))[0] &amp; (count - 1))
+#define cuckoo_hash_msb(key, count)  (((size_t *)(key))[1] &amp; (count - 1))
+</pre>
+<p>终于要讲解cuckoo filter最重要的三个操作了——查询、插入还有删除。查询操作是简单的，我们对传进来的参数key进行两次哈希求值tag[0]和tag[1]，并先用tag[0]定位到bucket的位置，从4路slot中再去对比tag[1]。只有比中了tag后，由于只是key的一部分，我们再去从flash中验证完整的key，并把数据在flash中的偏移值read_addr输出返回。相应的，如果bucket[tag[0]]的4路slot都没有比中，我们再去bucket[tag[1]]中比对（代码略），如果还比不中，可以肯定这个key不存在。<strong>这种设计的好处就是减少了不必要的flash读操作，每次比对的是内存中的tag而不需要完整的key。</strong></p>
+<pre class="brush: cpp; title: ; notranslate" title="">static int cuckoo_hash_get(struct hash_table *table, uint8_t *key, uint8_t **read_addr)
+{
+    int i, j;
+    uint8_t *addr;
+    uint32_t tag[2], offset;
+    struct hash_slot_cache *slot;
+
+    tag[0] = cuckoo_hash_lsb(key, table-&gt;bucket_num);
+    tag[1] = cuckoo_hash_msb(key, table-&gt;bucket_num);
+
+    /* Filter the key and verify if it exists. */
+    slot = table-&amp;gt;buckets[tag[0]];
+    for (i = 0; i bucket_num) == slot[i].tag) {
+        if (slot[i].status == OCCUPIED) {
+            offset = slot[i].offset;
+            addr = key_verify(key, offset);
+            if (addr != NULL) {
+                if (read_addr != NULL) {
+                    *read_addr = addr;
+                }
+                break;
+            }
+        } else if (slot[i].status == DELETED) {
+            return DELETED;
+        }
+    }
+    ...
+}</pre>
+<p>接下来先将简单的删除操作，之所以简单是因为delete除了将相应slot的状态值设置一下之外，其实什么都没有干，也就是说它不会真正到flash里面去把数据清除掉。为什么？很简单，没有必要。还有一个原因，flash的写操作之前需要擦除整个页面，这种擦除是会折寿的，<strong>所以很多flash支持随机读，但必须保持顺序写。</strong></p>
+<pre class="brush: cpp; title: ; notranslate" title="">static void cuckoo_hash_delete(struct hash_table *table, uint8_t *key)
+{
+    uint32_t i, j, tag[2];
+    struct hash_slot_cache *slot;
+
+    tag[0] = cuckoo_hash_lsb(key, table-&gt;bucket_num);
+    tag[1] = cuckoo_hash_msb(key, table-&gt;bucket_num);
+
+    slot = table-&gt;buckets[tag[0]];
+    for (i = 0; i bucket_num) == slot[i].tag) {
+        slot[i].status = DELETED;
+        return;
+    }
+    ...
+}</pre>
+<p>了解了flash的读写特性，你就知道为啥插入操作在flash层面要设计成append。不过我们这里不讨论过多flash细节，哈希表层面的插入逻辑其实跟查询差不多，我就不贴代码了。这里要贴的是如何判断并处理碰撞，其实这里也没啥玄机，就是用old_tag和old_offset保存一下临时变量，以便一个元素被踢出去之后还能找到备用的安身之所。但这里会有一个判断，每次踢人都会计数，当alt_cnt大于512时候表示哈希表真的快满了，这时候需要rehash了。</p>
+<pre class="brush: cpp; title: ; notranslate" title="">static int cuckoo_hash_collide(struct hash_table *table, uint32_t *tag, uint32_t *p_offset)
+{
+    int i, j, k, alt_cnt;
+    uint32_t old_tag[2], offset, old_offset;
+    struct hash_slot_cache *slot;
+
+    /* Kick out the old bucket and move it to the alternative bucket. */
+    offset = *p_offset;
+    slot = table-&gt;buckets[tag[0]];
+    old_tag[0] = tag[0];
+    old_tag[1] = slot[0].tag;
+    old_offset = slot[0].offset;
+    slot[0].tag = tag[1];
+    slot[0].offset = offset;
+    i = 0 ^ 1;
+    k = 0;
+    alt_cnt = 0;
+
+KICK_OUT:
+    slot = table-&gt;buckets[old_tag[i]];
+    for (j = 0; j &lt; ASSOC_WAY; j++) {
+        if (offset == INVALID_OFFSET &amp;&amp; slot[j].status == DELETED) {
+            slot[j].status = OCCUPIED;
+            slot[j].tag = old_tag[i ^ 1];
+            *p_offset = offset = slot[j].offset;
+            break;
+        } else if (slot[j].status == AVAILIBLE) {
+            slot[j].status = OCCUPIED;
+            slot[j].tag = old_tag[i ^ 1];
+            slot[j].offset = old_offset;
+            break;
+        }
+    }
+
+    if (j == ASSOC_WAY) {
+        if (++alt_cnt &gt; 512) {
+            if (k == ASSOC_WAY - 1) {
+                /* Hash table is almost full and needs to be resized */
+                return 1;
+            } else {
+                k++;
+            }
+        }
+        uint32_t tmp_tag = slot[k].tag;
+        uint32_t tmp_offset = slot[k].offset;
+        slot[k].tag = old_tag[i ^ 1];
+        slot[k].offset = old_offset;
+        old_tag[i ^ 1] = tmp_tag;
+        old_offset = tmp_offset;
+        i ^= 1;
+        goto KICK_OUT;
+    }
+
+    return 0;
+}</pre>
+<p>rehash的逻辑也很简单，无非就是把哈希表中的buckets和slots重新realloc一下，空间扩展一倍，然后再从flash中的key重新插入到新的哈希表里去。这里有个陷阱要注意，<strong>千万不能有相同的key混进来！</strong>虽然cuckoo hashing不像开链法那样会退化成O(n)，但由于每个元素有两个哈希值，而且每次计算的哈希值随着哈希表rehash的规模而不同，相同的key并不能立即检测到冲突，但当相同的key达到一定规模后，噩梦就开始了，由于rehash里面有插入操作，一旦在这里触发碰撞，又会触发rehash，这时就是一个rehash不断递归的过程，由于其中老的内存没释放，新的内存不断重新分配，整个程序就如同陷入DoS攻击一般瘫痪了。<strong>所以每次插入操作前一定要判断一下key是否已经存在过，并且对rehash里的插入使用碰撞断言防止此类情况发生。</strong>笔者在测试中不幸中了这样的彩蛋，调试了大半天才搞清楚原因，搞IT的同学们记住一定要防小人啊~</p>
+<pre class="brush: cpp; title: ; notranslate" title="">static void cuckoo_rehash(struct hash_table *table)
+{
+    ...
+    uint8_t *read_addr = nvrom_base_addr;
+    uint32_t entries = log_entries;
+    while (entries--) {
+        uint8_t key[20];
+        uint32_t offset = read_addr - nvrom_base_addr;
+        for (i = 0; i &amp;lt; 20; i++) {
+            key[i] = flash_read(read_addr);
+            read_addr++;
+        }
+        /* Duplicated keys in hash table which can cause eternal
+         * hashing collision! Be careful of that!
+         */
+        assert(!cuckoo_hash_put(table, key, &amp;offset));
+        if (cuckoo_hash_get(&amp;old_table, key, NULL) == DELETED) {
+            cuckoo_hash_delete(table, key);
+        }
+        read_addr += DAT_LEN;
+    }
+    ...
+}</pre>
+<p>到此为止代码的逻辑还是比较简单，使用效果如何呢？我来帮你找个大文件<a href="https://github.com/unqlite/unqlite/blob/master/unqlite.c" target="_blank">unqlite.c</a>测试一下，这是一个嵌入式数据库源代码，共59959行代码。作为需要导入的文件，编译我们的cuckoo filter，然后执行：</p>
+<pre class="brush: bash; title: ; notranslate" title="">./cuckoo_db unqlite.c output.c</pre>
+<p>你会发现生成output.c正好也是59959行代码，一分不差，probably yes终于变成了definitely yes。同时也可以看到，cuckoo filter真的很快！如果你想看hashing的整个过程，可以参照<a href="https://github.com/begeekmyfriend/CuckooFilter/blob/master/README.md" target="_blank">README</a>里把调试宏打开。最后，欢迎给<a href="https://github.com/begeekmyfriend/CuckooFilter" target="_blank">这个小玩意</a>提交PR！</p>
+<h4>参考资料</h4>
+<p>Cuckoo Filter的<a href="http://www.cs.cmu.edu/~binfan/papers/conext14_cuckoofilter.pdf" target="_blank">论文</a>和<a href="http://www.cs.cmu.edu/~binfan/papers/conext14_cuckoofilter.pptx" target="_blank">PPT</a>：Cuckoo Filter: Practically Better Than Bloom
+<p align="center"><img src=http://coolshell.cn//wp-content/uploads/2009/04/qrcode_for_gh_dd9d8c843f20_860-300x300.jpg><br />欢迎关注CoolShell微信公众账号</p>
+<div style="margin-top: 15px; font-size: 11px;color: #cc0000;">
+<p align=center><strong>（转载本站文章请注明作者和出处 <a href="http://coolshell.cn/">酷 壳 &#8211; CoolShell.cn</a> ，请勿用于任何商业用途）</strong></div>
+<div style="text-align:center;padding:0px;font-size: 14px;margin-bottom: 50px;">——=== <b>访问 <a href=http://coolshell.cn/404/ target=_blank>酷壳404页面</a> 寻找遗失儿童。</b> ===——</div>
+<div style="clear:both; margin-top:5px; margin-bottom:5px;"></div><div style="float:left"><!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<a class="jiathis_button_tsina"></a>
+<a class="jiathis_button_tqq"></a>
+<a class="jiathis_button_tsohu"></a>
+<a class="jiathis_button_t163"></a>
+<a class="jiathis_button_douban"></a>
+<a class="jiathis_button_renren"></a>
+<a class="jiathis_button_zhuaxia"></a>
+<a class="jiathis_button_fanfou"></a>
+<a class="jiathis_button_twitter"></a>
+<a class="jiathis_button_fb"></a>
+<a class="jiathis_button_gmail"></a>
+<a class="jiathis_button_linkedin"></a>
+<a class="jiathis_button_friendfeed"></a>
+<a class="jiathis_button_digg"></a>
+<a href="http://www.jiathis.com/share?uid=1541368" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript" >
+var jiathis_config={
+	data_track_clickback:true,
+	summary:"",
+	hideMore:false
+}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=1541368" charset="utf-8"></script>
+<!-- JiaThis Button END --></div><div style="clear:both; margin-top:5px; margin-bottom:5px;"></div>			<div class="fixed"></div>
+		</div>
+		<div class="under">
+			<span class="categories">分类: </span><span><a href="http://coolshell.cn/category/proglanguage/cplusplus" rel="category tag">C/C++语言</a>, <a href="http://coolshell.cn/category/datebase" rel="category tag">数据库</a>, <a href="http://coolshell.cn/category/progdesign" rel="category tag">程序设计</a>, <a href="http://coolshell.cn/category/funny" rel="category tag">趣味问题</a></span>			<span class="tags">标签: </span><span><a href="http://coolshell.cn/tag/algorithm" rel="tag">Algorithm</a>, <a href="http://coolshell.cn/tag/filter" rel="tag">filter</a>, <a href="http://coolshell.cn/tag/hashing" rel="tag">hashing</a>, <a href="http://coolshell.cn/tag/%e6%b5%b7%e9%87%8f%e6%95%b0%e6%8d%ae" rel="tag">海量数据</a></span>		</div>
+<div id="post-ratings-17225" class="post-ratings" itemscope itemtype="http://schema.org/Article" data-nonce="0beb52a1a5"><img id="rating_17225_1" src="http://coolshell.cn//wp-content/plugins/wp-postratings/images/stars_crystal/rating_on.gif" alt="好烂啊" title="好烂啊" onmouseover="current_rating(17225, 1, '好烂啊');" onmouseout="ratings_off(4.5, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="cursor: pointer; border: 0px;" /><img id="rating_17225_2" src="http://coolshell.cn//wp-content/plugins/wp-postratings/images/stars_crystal/rating_on.gif" alt="有点差" title="有点差" onmouseover="current_rating(17225, 2, '有点差');" onmouseout="ratings_off(4.5, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="cursor: pointer; border: 0px;" /><img id="rating_17225_3" src="http://coolshell.cn//wp-content/plugins/wp-postratings/images/stars_crystal/rating_on.gif" alt="凑合看看" title="凑合看看" onmouseover="current_rating(17225, 3, '凑合看看');" onmouseout="ratings_off(4.5, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="cursor: pointer; border: 0px;" /><img id="rating_17225_4" src="http://coolshell.cn//wp-content/plugins/wp-postratings/images/stars_crystal/rating_on.gif" alt="还不错" title="还不错" onmouseover="current_rating(17225, 4, '还不错');" onmouseout="ratings_off(4.5, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="cursor: pointer; border: 0px;" /><img id="rating_17225_5" src="http://coolshell.cn//wp-content/plugins/wp-postratings/images/stars_crystal/rating_half.gif" alt="很精彩" title="很精彩" onmouseover="current_rating(17225, 5, '很精彩');" onmouseout="ratings_off(4.5, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="cursor: pointer; border: 0px;" /> (<strong>31</strong> 人打了分，平均分： <strong>4.52</strong> )<br /><span class="post-ratings-text" id="ratings_17225_text"></span><meta itemprop="headline" content="Cuckoo Filter：设计与实现" /><meta itemprop="description" content="（感谢网友&nbsp;@我的上铺叫路遥&nbsp;投稿）
+
+
+
+对于海量数据处理业务，我们通常需要一个索引数据结构，用来帮助查询，快速判断数据记录是否存在，这种数据结构通常又叫过滤器(filter)。考虑这样一个场景，上网的时候需要在浏览器上输入URL，这时浏览器需要去判断这是否一个恶意的网站，它将对本地缓存的成千上万的URL索引进行过滤，如果不存在，就放行，如果（可能）存在，则向远程服务端发起验证请求，并回..." /><meta itemprop="datePublished" content="2015-09-02T09:18:54+00:00" /><meta itemprop="url" content="http://coolshell.cn/articles/17225.html" /><div style="display: none;" itemprop="aggregateRating" itemscope itemtype="http://schema.org/AggregateRating"><meta itemprop="bestRating" content="5" /><meta itemprop="worstRating" content="1" /><meta itemprop="ratingValue" content="4.52" /><meta itemprop="ratingCount" content="31" /></div></div><div id="post-ratings-17225-loading" class="post-ratings-loading">
+			<img src="http://coolshell.cn//wp-content/plugins/wp-postratings/images/loading.gif" width="16" height="16" class="post-ratings-image" />Loading...</div> 
+	</div>
+
+	<!-- related posts START -->
+	<div id="related_posts">
+<div class="wp_rp_wrap  wp_rp_plain" id="wp_rp_first"><div class="wp_rp_content"><h3 class="related_post_title">相关文章</h3><ul class="related_post wp_rp"><li data-position="0" data-poid="in-10427" data-post-type="none" ><small class="wp_rp_publish_date">2013年10月09日</small> <a href="http://coolshell.cn/articles/10427.html" class="wp_rp_title">伙伴分配器的一个极简实现</a></li><li data-position="1" data-poid="in-3738" data-post-type="none" ><small class="wp_rp_publish_date">2011年02月28日</small> <a href="http://coolshell.cn/articles/3738.html" class="wp_rp_title">打印质数的各种算法</a></li><li data-position="2" data-poid="in-8239" data-post-type="none" ><small class="wp_rp_publish_date">2012年09月07日</small> <a href="http://coolshell.cn/articles/8239.html" class="wp_rp_title">无锁队列的实现</a></li><li data-position="3" data-poid="in-7425" data-post-type="none" ><small class="wp_rp_publish_date">2012年05月17日</small> <a href="http://coolshell.cn/articles/7425.html" class="wp_rp_title">rsync 的核心算法</a></li><li data-position="4" data-poid="in-9886" data-post-type="none" ><small class="wp_rp_publish_date">2013年07月14日</small> <a href="http://coolshell.cn/articles/9886.html" class="wp_rp_title">二叉树迭代器算法</a></li><li data-position="5" data-poid="in-11847" data-post-type="none" ><small class="wp_rp_publish_date">2014年08月06日</small> <a href="http://coolshell.cn/articles/11847.html" class="wp_rp_title">谜题的答案和活动的心得体会</a></li><li data-position="6" data-poid="in-11832" data-post-type="none" ><small class="wp_rp_publish_date">2014年08月03日</small> <a href="http://coolshell.cn/articles/11832.html" class="wp_rp_title">【活动】解迷题送礼物</a></li><li data-position="7" data-poid="in-4671" data-post-type="none" ><small class="wp_rp_publish_date">2011年05月04日</small> <a href="http://coolshell.cn/articles/4671.html" class="wp_rp_title">可视化的数据结构和算法</a></li></ul></div></div>
+</div><div class="fixed"></div>	<!-- related posts END -->
+
+	<script type="text/javascript" src="http://coolshell.cn//wp-content/themes/inove/js/comment.js"></script>
+
+
+
+<div id="comments">
+
+<div id="cmtswitcher">
+			<a id="commenttab" class="curtab" href="javascript:void(0);" onclick="MGJS.switchTab('thecomments,commentnavi', 'thetrackbacks', 'commenttab', 'curtab', 'trackbacktab', 'tab');">评论 (32)</a>
+		<a id="trackbacktab" class="tab" href="javascript:void(0);" onclick="MGJS.switchTab('thetrackbacks', 'thecomments,commentnavi', 'trackbacktab', 'curtab', 'commenttab', 'tab');">Trackbacks (0)</a>
+				<span class="addcomment"><a href="#respond">发表评论</a></span>
+				<span class="addtrackback"><a href="http://coolshell.cn/articles/17225.html/trackback">Trackback</a></span>
+		<div class="fixed"></div>
+</div>
+
+<div id="commentlist">
+	<!-- comments START -->
+	<ol id="thecomments">
+		<li class="comment regularcomment" id="comment-1752675">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/ec6c4d8998778478ced03cfbb25f55a1?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/ec6c4d8998778478ced03cfbb25f55a1?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1752675">
+				
+				airekans
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月2日10:13					 | <a href="#comment-1752675">#1</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1752675', 'comment-1752675', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1752675', 'comment-1752675', 'commentbody-1752675', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1752675">
+					<p>代码格式是不是可以代码的段来渲染，而不是用引用？这样代码会好看一些</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1752974">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/cd78d9a23bfbaf4b116aa52bd967cdcd?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/cd78d9a23bfbaf4b116aa52bd967cdcd?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1752974">
+				
+				陈靖一
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月2日17:36					 | <a href="#comment-1752974">#2</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1752974', 'comment-1752974', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1752974', 'comment-1752974', 'commentbody-1752974', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1752974">
+					<p>难得抢到二楼！！</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1753028">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/6497d39689a9e6ef44749f76123e2e87?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/6497d39689a9e6ef44749f76123e2e87?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1753028">
+				
+				nima
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月2日21:26					 | <a href="#comment-1753028">#3</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1753028', 'comment-1753028', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1753028', 'comment-1753028', 'commentbody-1753028', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1753028">
+					<p>Got to the third floor!</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1753066">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/733e454c5f41a7e1ecee2b181c2f0fd7?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/733e454c5f41a7e1ecee2b181c2f0fd7?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1753066">
+				
+				tom
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月3日00:56					 | <a href="#comment-1753066">#4</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1753066', 'comment-1753066', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1753066', 'comment-1753066', 'commentbody-1753066', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1753066">
+					<p>耗子叔，Great article!</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1753614">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/fd8f80afaf4508c491480fce3a4340be?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/fd8f80afaf4508c491480fce3a4340be?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1753614">
+				
+				jonmax
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月5日10:07					 | <a href="#comment-1753614">#5</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1753614', 'comment-1753614', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1753614', 'comment-1753614', 'commentbody-1753614', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1753614">
+					<p>cuckoo_rehash这个函数的第9行显示得不对</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment admincomment" id="comment-1753624">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/a6e9e679d4d308a570b1e74705c026de?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/a6e9e679d4d308a570b1e74705c026de?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1753624" class="url" href="http://weibo.com/fullofbull" rel="external nofollow">
+				
+				Leo
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月5日10:49					 | <a href="#comment-1753624">#6</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1753624', 'comment-1753624', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1753624', 'comment-1753624', 'commentbody-1753624', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1753624">
+					<p><a href="#comment-1753614" rel="nofollow">@jonmax </a><br />
+转义了，我没权限改了，源代码在github上</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1753634">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/f93f22f2c8e501a705f487692cb342a3?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/f93f22f2c8e501a705f487692cb342a3?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1753634">
+				
+				wwwjfy
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月5日11:19					 | <a href="#comment-1753634">#7</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1753634', 'comment-1753634', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1753634', 'comment-1753634', 'commentbody-1753634', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1753634">
+					<p>相对于 bloom filter，增加了原始数据的一些信息进行比对来达到可以删除的效果。感觉是 hash 和 bloom filter 的结合，空间占用还是比 bloom filter 大一些。</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1754015">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/3286b3b86f81d4ac951e6e8394469167?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/3286b3b86f81d4ac951e6e8394469167?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1754015">
+				
+				yutian2011
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月6日10:14					 | <a href="#comment-1754015">#8</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1754015', 'comment-1754015', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1754015', 'comment-1754015', 'commentbody-1754015', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1754015">
+					<p>这个文章 还没达到皓哥通熟易懂的境界&#8230;&#8230;</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1754124">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/2fa408468fdb48929e51f8eaeeaeb729?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/2fa408468fdb48929e51f8eaeeaeb729?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1754124" class="url" href="http://www.cnblogs.com/Jack47/" rel="external nofollow">
+				
+				Jack47
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月6日19:36					 | <a href="#comment-1754124">#9</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1754124', 'comment-1754124', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1754124', 'comment-1754124', 'commentbody-1754124', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1754124">
+					<p>我之前写了一篇关于bloom filter的文章，感兴趣的同学可以看看：<br />
+<a href="http://www.cnblogs.com/Jack47/p/bloom_filter_intro.html" rel="nofollow">http://www.cnblogs.com/Jack47/p/bloom_filter_intro.html</a></p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1754340">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/da999f20f15681c8446d6a1d99ff7297?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/da999f20f15681c8446d6a1d99ff7297?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1754340">
+				
+				cormen
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月7日15:48					 | <a href="#comment-1754340">#10</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1754340', 'comment-1754340', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1754340', 'comment-1754340', 'commentbody-1754340', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1754340">
+					<p>耗子叔终于更新了</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1754411">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/8ff9e6143668a7c2589bd62a4e7915ec?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/8ff9e6143668a7c2589bd62a4e7915ec?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1754411" class="url" href="http://www.zhoumobai.com/" rel="external nofollow">
+				
+				周墨白博客
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月7日21:43					 | <a href="#comment-1754411">#11</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1754411', 'comment-1754411', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1754411', 'comment-1754411', 'commentbody-1754411', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1754411">
+					<p>建议博主换个自适应的主题  小屏幕伤不起啊</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1754438">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/f4a3f3bfe74fa4ab2e69df150ecaac35?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/f4a3f3bfe74fa4ab2e69df150ecaac35?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1754438" class="url" href="http://www.zhidao91.com" rel="external nofollow">
+				
+				知道91博客
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月8日00:17					 | <a href="#comment-1754438">#12</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1754438', 'comment-1754438', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1754438', 'comment-1754438', 'commentbody-1754438', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1754438">
+					<p>不错啊，代码功底很强啊</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1760585">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/ccfb1aaccfc2ad80122aaace163a9785?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/ccfb1aaccfc2ad80122aaace163a9785?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1760585" class="url" href="http://www.jellythink.com" rel="external nofollow">
+				
+				果冻想
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月20日23:23					 | <a href="#comment-1760585">#13</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1760585', 'comment-1760585', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1760585', 'comment-1760585', 'commentbody-1760585', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1760585">
+					<p>强，收下学习。</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1761304">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/22d77502d0f897cb5c845707591bb4ad?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/22d77502d0f897cb5c845707591bb4ad?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1761304">
+				
+				小旋风
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月22日16:25					 | <a href="#comment-1761304">#14</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1761304', 'comment-1761304', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1761304', 'comment-1761304', 'commentbody-1761304', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1761304">
+					<blockquote cite="#commentbody-1760585"><p>
+<strong><a href="#comment-1760585" rel="nofollow">果冻想</a> :</strong><br />
+强，收下学习。
+</p></blockquote>
+<p>收下了</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1761308">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/22d77502d0f897cb5c845707591bb4ad?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/22d77502d0f897cb5c845707591bb4ad?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1761308">
+				
+				小旋风
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月22日16:50					 | <a href="#comment-1761308">#15</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1761308', 'comment-1761308', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1761308', 'comment-1761308', 'commentbody-1761308', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1761308">
+					<blockquote cite="#commentbody-1761304"><p>
+<strong><a href="#comment-1761304" rel="nofollow">小旋风</a> :</strong></p>
+<blockquote cite="#commentbody-1760585"><p>
+<strong><a href="#comment-1760585" rel="nofollow">果冻想</a> :</strong><br />
+强，收下学习。
+</p></blockquote>
+<p>收下了
+</p></blockquote>
+<p>代码很好用</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1763685">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/fe97c78e609c7059304bcf1ee1c4cff7?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/fe97c78e609c7059304bcf1ee1c4cff7?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1763685">
+				
+				jasonxzh
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年9月29日00:54					 | <a href="#comment-1763685">#16</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1763685', 'comment-1763685', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1763685', 'comment-1763685', 'commentbody-1763685', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1763685">
+					<p>分析的很细致，我说点这个数据结构瑕疵把<br />
+这篇论文最大的亮点其实在于用异或运算将bucketed cuckoo hashing引入了fingerprint   然而其设计有几处漏洞：<br />
+1. 异或运算带来的溢出问题   即filter得大小必须是2的整数次幂  不然异或运算的结果可能在filter的表示范围之外，这限制了它的应用<br />
+2. bucketed cuckoo hashing 的load factor固然很高，但是引入fingerprint之后却使得false-positive极大提高（paper中使用4个entry为一个bucket，也就是说一次查找至少要查询8个entry），所以在没有进行排序优化过的cuckoo hashing实际上是远远不如bloom filter来得还用的。（排序优化在paper后半段有讲到，实现较为复杂）。<br />
+所以综合来看目前cuckoo filter实用性并不大。<br />
+我目前的论文正着眼于改进上述问题。</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1766639">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/56cc6562f26eaad0c637ff60ee05cb1a?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/56cc6562f26eaad0c637ff60ee05cb1a?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1766639">
+				
+				howard
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月2日16:31					 | <a href="#comment-1766639">#17</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1766639', 'comment-1766639', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1766639', 'comment-1766639', 'commentbody-1766639', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1766639">
+					<p><a href="#comment-1763685" rel="nofollow">@jasonxzh </a><br />
+请问，你的论文题目是？</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1767907">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/b1c1a345b2b5cd9960d403febce47950?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/b1c1a345b2b5cd9960d403febce47950?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1767907" class="url" href="http://www.linjunlong.com" rel="external nofollow">
+				
+				小林博客
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月4日05:22					 | <a href="#comment-1767907">#18</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1767907', 'comment-1767907', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1767907', 'comment-1767907', 'commentbody-1767907', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1767907">
+					<p>这个文章 还没达到皓哥通熟易懂的境界……</p>
+<p><a href="#comment-1754015" rel="nofollow">@yutian2011 </a><br />
+&#8230;</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1770580">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/21831368b3ee299f5170543dc49d5587?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/21831368b3ee299f5170543dc49d5587?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1770580">
+				
+				nima
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月9日10:26					 | <a href="#comment-1770580">#19</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1770580', 'comment-1770580', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1770580', 'comment-1770580', 'commentbody-1770580', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1770580">
+					<p>Got to the third floor</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1772165">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/6200e7f2004a2e8ddcdd72472f3be473?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/6200e7f2004a2e8ddcdd72472f3be473?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1772165">
+				
+				cdmaok
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月11日16:09					 | <a href="#comment-1772165">#20</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1772165', 'comment-1772165', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1772165', 'comment-1772165', 'commentbody-1772165', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1772165">
+					<p>会不会有这种情况，发生冲突的时候，要被踢掉的元素也已经在他的备用位置上面了，如果把他挪走，就没有地方放了？</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment admincomment" id="comment-1772443">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/a6e9e679d4d308a570b1e74705c026de?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/a6e9e679d4d308a570b1e74705c026de?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1772443" class="url" href="http://weibo.com/fullofbull" rel="external nofollow">
+				
+				Leo
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月12日08:47					 | <a href="#comment-1772443">#21</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1772443', 'comment-1772443', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1772443', 'comment-1772443', 'commentbody-1772443', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1772443">
+					<p><a href="#comment-1772165" rel="nofollow">@cdmaok </a><br />
+备用位置是可以来回踢的，上文提到，发生冲突时踢的次数超过512时，表明哈希表真的满了，实际上内部出现了循环踢人的现象。就是A踢B，B踢C，C踢A。</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1773099">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/e5a86246e389b85e37c9be17e069daf5?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/e5a86246e389b85e37c9be17e069daf5?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1773099">
+				
+				haterh
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月13日18:19					 | <a href="#comment-1773099">#22</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1773099', 'comment-1773099', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1773099', 'comment-1773099', 'commentbody-1773099', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1773099">
+					<p>这玩意和Bloom Filter是两码事吧，Bloom Filter每个slot只有一位，Cuckoo Filter里面每个slot都不知道要占多少位了</p>
+<p>Cuckoo Filter应该和其他常规的哈希策略比，比如算法导论里介绍的Double Hashing，我估计好不到哪去</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1778566">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/22d77502d0f897cb5c845707591bb4ad?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/22d77502d0f897cb5c845707591bb4ad?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1778566">
+				
+				小旋风
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月21日15:38					 | <a href="#comment-1778566">#23</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1778566', 'comment-1778566', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1778566', 'comment-1778566', 'commentbody-1778566', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1778566">
+					<blockquote cite="#commentbody-1773099"><p>
+<strong><a href="#comment-1773099" rel="nofollow">haterh</a> :</strong><br />
+这玩意和Bloom Filter是两码事吧，Bloom Filter每个slot只有一位，Cuckoo Filter里面每个slot都不知道要占多少位了<br />
+Cuckoo Filter应该和其他常规的哈希策略比，比如算法导论里介绍的Double Hashing，我估计好不到哪去
+</p></blockquote>
+<p>啊啊</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1781268">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/2abcc291383f0468503b64a59d6db561?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/2abcc291383f0468503b64a59d6db561?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1781268" class="url" href="http://www.hex55.com" rel="external nofollow">
+				
+				shawge
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年10月26日09:25					 | <a href="#comment-1781268">#24</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1781268', 'comment-1781268', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1781268', 'comment-1781268', 'commentbody-1781268', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1781268">
+					<p><a href="#comment-1779181" rel="nofollow">@ppp项目 </a><br />
+举报拉圾评论，左耳朵耗子，哈哈。</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1788204">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://2.gravatar.com/avatar/57e929d39fef91892484123ca4364237?s=32&#038;d=mm&#038;r=g' srcset='http://2.gravatar.com/avatar/57e929d39fef91892484123ca4364237?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1788204">
+				
+				莫名其妙的小朋友
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年11月9日09:36					 | <a href="#comment-1788204">#25</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1788204', 'comment-1788204', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1788204', 'comment-1788204', 'commentbody-1788204', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1788204">
+					<blockquote cite="#commentbody-1773099"><p>
+<strong><a href="#comment-1773099" rel="nofollow">haterh</a> :</strong><br />
+这玩意和Bloom Filter是两码事吧，Bloom Filter每个slot只有一位，Cuckoo Filter里面每个slot都不知道要占多少位了<br />
+Cuckoo Filter应该和其他常规的哈希策略比，比如算法导论里介绍的Double Hashing，我估计好不到哪去
+</p></blockquote>
+<p>多路Hash表根本不怎么省空间&#8230;</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1788205">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/357a20e8c56e69d6f9734d23ef9517e8?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/357a20e8c56e69d6f9734d23ef9517e8?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1788205" class="url" href="http://1024ss.com" rel="external nofollow">
+				
+				程序员难言之隐
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年11月9日09:38					 | <a href="#comment-1788205">#26</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1788205', 'comment-1788205', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1788205', 'comment-1788205', 'commentbody-1788205', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1788205">
+					<p>大家好，不好意思，我是来做广告的，1024ss.com 解决程序员的难言之隐！</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1788219">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://0.gravatar.com/avatar/c1d849b630800136533e8673e5931638?s=32&#038;d=mm&#038;r=g' srcset='http://0.gravatar.com/avatar/c1d849b630800136533e8673e5931638?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1788219">
+				
+				eric
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年11月9日10:44					 | <a href="#comment-1788219">#27</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1788219', 'comment-1788219', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1788219', 'comment-1788219', 'commentbody-1788219', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1788219">
+					<p>耗子，借宝地发个招聘，希望能见谅哈。<br />
+国内某知名跨境电商公司招php，25k及以上，五险一金都是全额缴纳，环境也高大上，觉得自己还不错的，然后还想学点东西的都可以加我qq：40850879 谢谢。</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1789494">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/d1596c40b7702bc94557e63bfc16e620?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/d1596c40b7702bc94557e63bfc16e620?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1789494">
+				
+				apc999
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年11月14日01:59					 | <a href="#comment-1789494">#28</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1789494', 'comment-1789494', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1789494', 'comment-1789494', 'commentbody-1789494', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1789494">
+					<p>你好， 我是cuckoo filter的作者。刚才无意中看到你的文章， 非常感谢你的实现和精彩解读。关于你的文中这段：<br />
+&#8220;采用二维哈希表（4路slot）大约80%的占用率（CMU论文数据据说达到90%以上，应该是扩大了slot关联数目所致）&#8221;我想解释一下。 我们是使用4路的哈希表达到的96%的存储效率。 一个重要的trick就是插入的时候使用500 的max retry， 另外使用足够好的哈希function</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment admincomment" id="comment-1789593">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/a6e9e679d4d308a570b1e74705c026de?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/a6e9e679d4d308a570b1e74705c026de?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1789593" class="url" href="http://weibo.com/fullofbull" rel="external nofollow">
+				
+				Leo
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年11月14日18:30					 | <a href="#comment-1789593">#29</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1789593', 'comment-1789593', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1789593', 'comment-1789593', 'commentbody-1789593', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1789593">
+					<p><a href="#comment-1789494" rel="nofollow">@apc999 </a><br />
+原作者你好，我是从您的论文中得到思路，自己实现了一个。但我并没有参考过您自己写的C++实现，所以有些地方可能有点臆断。<br />
+另外我的一个问题是，rehash发生时跟其它哈希表不同，cuckoo hashing并没有保存完整的key（只有一个备用tag），而且经过500次kickout，原有的hashtable内容被打乱。此时我扩张了bucket数目，如果使用key % (bucket_num &#8211; 1)的hash function重定位，必须从flash中重新读取所有key再进行rehash，原有hashtable中的元素是无法使用realloc（重用）的么？</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1789637">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/7f29cf8cb70099d958a8c057f8e27ce1?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/7f29cf8cb70099d958a8c057f8e27ce1?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<span id="commentauthor-1789637">
+				
+				hayabusa
+									</span>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年11月15日03:52					 | <a href="#comment-1789637">#30</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1789637', 'comment-1789637', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1789637', 'comment-1789637', 'commentbody-1789637', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1789637">
+					<p>学习学习</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1800599">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/a09e198be5d6b92729b922a9c12e0d71?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/a09e198be5d6b92729b922a9c12e0d71?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1800599" class="url" href="http://www.bingzhilv.com/" rel="external nofollow">
+				
+				郑州SEO优化
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2015年12月13日11:33					 | <a href="#comment-1800599">#31</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1800599', 'comment-1800599', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1800599', 'comment-1800599', 'commentbody-1800599', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1800599">
+					<p>博主这里人气很旺啊</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	<li class="comment regularcomment" id="comment-1804505">
+		<div class="author">
+			<div class="pic">
+				<img alt='' src='http://1.gravatar.com/avatar/7e4f70f57d7fa37a333f9048c8592c6e?s=32&#038;d=mm&#038;r=g' srcset='http://1.gravatar.com/avatar/7e4f70f57d7fa37a333f9048c8592c6e?s=64&amp;d=mm&amp;r=g 2x' class='avatar avatar-32 photo' height='32' width='32' />			</div>
+			<div class="name">
+									<a id="commentauthor-1804505" class="url" href="http://www.nbnkzy.com" rel="external nofollow">
+				
+				宁波工作服
+									</a>
+							</div>
+		</div>
+
+		<div class="info">
+			<div class="date">
+				2016年1月6日20:26					 | <a href="#comment-1804505">#32</a>
+			</div>
+			<div class="act">
+				<a href="javascript:void(0);" onclick="MGJS_CMT.reply('commentauthor-1804505', 'comment-1804505', 'comment');">回复</a> | 
+				<a href="javascript:void(0);" onclick="MGJS_CMT.quote('commentauthor-1804505', 'comment-1804505', 'commentbody-1804505', 'comment');">引用</a>
+							</div>
+			<div class="fixed"></div>
+			<div class="content">
+				
+				<div id="commentbody-1804505">
+					<p>谢谢分享。。。</p>
+				</div>
+			</div>
+		</div>
+		<div class="fixed"></div>
+
+</li><!-- #comment-## -->
+	</ol>
+	<!-- comments END -->
+
+
+	<!-- trackbacks START -->
+			<ol id="thetrackbacks">
+							<li class="messagebox">
+					本文目前尚无任何 trackbacks 和 pingbacks.				</li>
+
+					</ol>
+		<div class="fixed"></div>
+	<!-- trackbacks END -->
+</div>
+
+</div>
+
+	<form action="http://coolshell.cn/wp-comments-post.php" method="post" id="commentform">
+	<div id="respond">
+
+					
+			<div id="author_info">
+				<div class="row">
+					<input type="text" name="author" id="author" class="textfield" value="" size="24" tabindex="1" />
+					<label for="author" class="small">昵称 (必填)</label>
+				</div>
+				<div class="row">
+					<input type="text" name="email" id="email" class="textfield" value="" size="24" tabindex="2" />
+					<label for="email" class="small">电子邮箱 (我们会为您保密) (必填)</label>
+				</div>
+				<div class="row">
+					<input type="text" name="url" id="url" class="textfield" value="" size="24" tabindex="3" />
+					<label for="url" class="small">网址</label>
+				</div>
+			</div>
+
+			
+		
+		<!-- comment input -->
+		<div class="row">
+			<textarea name="comment" id="comment" tabindex="4" rows="8" cols="50"></textarea>
+		</div>
+
+		<!-- comment submit and rss -->
+		<div id="submitbox">
+			<a class="feed" href="http://coolshell.cn/comments/feed">订阅评论</a>
+			<div class="submitbutton">
+				<input name="submit" type="submit" id="submit" class="button" tabindex="5" value="提交评论" />
+			</div>
+						<input type="hidden" name="comment_post_ID" value="17225" />
+			<div class="fixed"></div>
+		</div>
+
+	</div>
+	<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="a466aac341" /></p><p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="103"/></p>	</form>
+
+	
+
+	<div id="postnavi">
+		<span class="prev"><a href="http://coolshell.cn/articles/17295.html" rel="next">让我们来谈谈分工</a></span>
+		<span class="next"><a href="http://coolshell.cn/articles/17200.html" rel="prev">Docker基础技术：DeviceMapper</a></span>
+		<div class="fixed"></div>
+	</div>
+
+
+<script type='text/javascript'>
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-7486123-1']);
+_gaq.push(['_trackPageview']);
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+</script>
+	</div>
+	<!-- main END -->
+
+	
+<!-- sidebar START -->
+<div id="sidebar">
+
+<!-- sidebar north START -->
+<div id="northsidebar" class="sidebar">
+
+	<!-- feeds -->
+	<div class="widget widget_feeds">
+		<div class="content">
+			<div id="subscribe">
+				<a rel="external nofollow" id="feedrss" title="订阅这个博客的文章" href="http://coolshell.cn/feed">订阅</a>
+									<ul id="feed_readers">
+						<li id="google_reader"><a rel="external nofollow" class="reader" title="订阅到 Google" href="http://fusion.google.com/add?feedurl=http://coolshell.cn/feed"><span> Google</span></a></li>
+						<li id="youdao_reader"><a rel="external nofollow" class="reader" title="订阅到有道" href="http://reader.youdao.com/#url=http://coolshell.cn/feed"><span>有道</span></a></li>
+						<li id="xianguo_reader"><a rel="external nofollow" class="reader" title="订阅到鲜果" href="http://www.xianguo.com/subscribe.php?url=http://coolshell.cn/feed"><span>鲜果</span></a></li>
+						<li id="zhuaxia_reader"><a rel="external nofollow" class="reader" title="订阅到抓虾" href="http://www.zhuaxia.com/add_channel.php?url=http://coolshell.cn/feed"><span>抓虾</span></a></li>
+						<li id="yahoo_reader"><a rel="external nofollow" class="reader" title="订阅到 My Yahoo!"	href="http://add.my.yahoo.com/rss?url=http://coolshell.cn/feed"><span> My Yahoo!</span></a></li>
+						<li id="newsgator_reader"><a rel="external nofollow" class="reader" title="订阅到 newsgator"	href="http://www.newsgator.com/ngs/subscriber/subfext.aspx?url=http://coolshell.cn/feed"><span> newsgator</span></a></li>
+						<li id="bloglines_reader"><a rel="external nofollow" class="reader" title="订阅到 Bloglines"	href="http://www.bloglines.com/sub/http://coolshell.cn/feed"><span> Bloglines</span></a></li>
+						<li id="inezha_reader"><a rel="external nofollow" class="reader" title="订阅到哪吒"	href="http://inezha.com/add?url=http://coolshell.cn/feed"><span>哪吒</span></a></li>
+<li id="qq_reader"><a class="reader" title="订阅到QQ Mail" onclick="window.open(this.href);return false;" rel="external nofollow" href="http://mail.qq.com/cgi-bin/feed?u=http://coolshell.cn/feed"><span>
+			QQ Mail            </span></a></li>
+            <li id="douban_reader"><a class="reader" title="订阅到Douban" onclick="window.open(this.href);return false;" rel="external nofollow" href="http://9.douban.com/reader/subscribe?url=http://coolshell.cn/feed"><span>
+			Douban            </span></a></li>
+            <li id="rojo_reader"><a class="reader" title="订阅到Rojo" onclick="window.open(this.href);return false;" rel="external nofollow" href="http://www.rojo.com/add-subscription?resource=http://coolshell.cn/feed"><span>
+            Rojo            </span></a></li>
+            <li id="pageflakes_reader"><a class="reader" title="订阅到Pageflakes" onclick="window.open(this.href);return false;" rel="external nofollow" href="http://www.pageflakes.com/subscribe.aspx?url=http://coolshell.cn/feed"><span>
+            Pageflakes            </span></a></li>
+					</ul>
+							</div>
+							<a id="followme" title="Follow me!" href="http://twitter.com/haoel/">Twitter</a>
+						<div class="fixed"></div>
+		</div>
+	</div>
+
+	<!-- showcase -->
+			<div class="widget">
+							<h3>本站公告</h3>
+						<div class="content">
+				<p align="center"><a href="https://jianxun.io?utm_source=coolshell&utm_medium=webad&utm_campaign=regular&utm_content=&utm_term=rightbanner" target=_blank><image src=https://www.jianxun.io/ad/20151101/coolshell-rightbanner.png height=280 weight=280 alt="简寻——高端程序员职位推荐" title="简寻——高端程序员职位推荐"></a></p>
+
+
+<p align="center" style="background-color: #777;padding: 5px;color: white;font-weight: bold;border: solid 1px black;text-shadow: 0px 0px 3px black;">访问 <a href="http://coolshell.cn/404/" target=_blank style="color: #FFE249;">酷壳404页面</a> 寻找遗失儿童！</p>
+
+<p align="center"><image src=http://coolshell.cn//wp-content/uploads/2009/04/qrcode_for_gh_dd9d8c843f20_860-300x300.jpg height=280 weight=280 alt="微信公众号" title="微信公众号"></p>
+
+<p>酷壳建议大家多使用RSS访问阅读（本站已经是全文输出，推荐使用cloud.feedly.com 或 digg.com）。有相关事宜欢迎电邮：haoel(at)hotmail.com。最后，感谢大家对酷壳的支持和体谅！</p>			</div>
+		</div>
+	
+		<div id="recent-posts-2" class="widget widget_recent_entries">		<h3>最新文章</h3>		<ul>
+					<li>
+				<a href="http://coolshell.cn/articles/17295.html">让我们来谈谈分工</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/17225.html">Cuckoo Filter：设计与实现</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/17200.html">Docker基础技术：DeviceMapper</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/17061.html">Docker基础技术：AUFS</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/17049.html">Docker基础技术：Linux CGroup</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/17010.html">Docker基础技术：Linux Namespace（上）</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/17029.html">Docker基础技术：Linux Namespace（下）</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/17066.html">关于移动端的钓鱼式攻击</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/16910.html">Linus：为何对象引用计数必须是原子的</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/12225.html">DHH 谈混合移动应用开发</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/12206.html">HTML6 展望</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/12136.html">Google Inbox如何跨平台重用代码？</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/12103.html">vfork 挂掉的一个问题</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/12052.html">Leetcode 编程训练</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/12012.html">State Threads 回调终结者</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11973.html">bash代码注入的安全漏洞</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11928.html">互联网之子 &#8211; Aaron Swartz</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11847.html">谜题的答案和活动的心得体会</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11832.html">【活动】解迷题送礼物</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11656.html">开发团队的效率</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11609.html">TCP 的那些事儿（下）</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11564.html">TCP 的那些事儿（上）</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11629.html">「我只是认真」聊聊工匠情怀</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11541.html">面向GC的Java编程</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11466.html">C语言的整型溢出问题</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11454.html">从LongAdder看更高效的无锁实现</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11432.html">从Code Review 谈如何做技术</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11377.html">C语言结构体里的成员数组和指针</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11312.html">无插件Vim编程技巧</a>
+						</li>
+					<li>
+				<a href="http://coolshell.cn/articles/11265.html">Python修饰器的函数式编程</a>
+						</li>
+				</ul>
+		</div>		<div id="views-4" class="widget widget_views"><h3>全站热门</h3><ul>
+<li><a href="http://coolshell.cn/articles/4990.html"  title="程序员技术练级攻略 - 650,367 人阅读">程序员技术练级攻略</a></li><li><a href="http://coolshell.cn/articles/5426.html"  title="简明 Vim 练级攻略 - 576,593 人阅读">简明 Vim 练级攻略</a></li><li><a href="http://coolshell.cn/articles/7186.html"  title="做个环保主义的程序员 - 247,284 人阅读">做个环保主义的程序员</a></li><li><a href="http://coolshell.cn/articles/4102.html"  title="如何学好C语言 - 210,457 人阅读">如何学好C语言</a></li><li><a href="http://coolshell.cn/articles/9070.html"  title="AWK 简明教程 - 179,194 人阅读">AWK 简明教程</a></li><li><a href="http://coolshell.cn/articles/8883.html"  title="应该知道的Linux技巧 - 170,750 人阅读">应该知道的Linux技巧</a></li><li><a href="http://coolshell.cn/articles/2250.html"  title="&ldquo;21天教你学会C++&rdquo; - 165,029 人阅读">&ldquo;21天教你学会C++&rdquo;</a></li><li><a href="http://coolshell.cn/articles/914.html"  title="6个变态的C语言Hello World程序 - 163,116 人阅读">6个变态的C语言Hello World程序</a></li><li><a href="http://coolshell.cn/articles/11564.html"  title="TCP 的那些事儿（上） - 156,879 人阅读">TCP 的那些事儿（上）</a></li><li><a href="http://coolshell.cn/articles/6470.html"  title="由12306.cn谈谈网站性能技术 - 155,382 人阅读">由12306.cn谈谈网站性能技术</a></li><li><a href="http://coolshell.cn/articles/10688.html"  title="编程能力与编程年龄 - 148,725 人阅读">编程能力与编程年龄</a></li><li><a href="http://coolshell.cn/articles/9308.html"  title="&ldquo;作环保的程序员，从不用百度开始&rdquo; - 148,413 人阅读">&ldquo;作环保的程序员，从不用百度开始&rdquo;</a></li><li><a href="http://coolshell.cn/articles/7829.html"  title="28个Unix/Linux的命令行神器 - 145,655 人阅读">28个Unix/Linux的命令行神器</a></li><li><a href="http://coolshell.cn/articles/1870.html"  title="我是怎么招聘程序员的 - 136,461 人阅读">我是怎么招聘程序员的</a></li><li><a href="http://coolshell.cn/articles/9104.html"  title="sed 简明教程 - 130,621 人阅读">sed 简明教程</a></li><li><a href="http://coolshell.cn/articles/6043.html"  title="Web开发中需要了解的东西 - 122,323 人阅读">Web开发中需要了解的东西</a></li><li><a href="http://coolshell.cn/articles/7490.html"  title="性能调优攻略 - 120,612 人阅读">性能调优攻略</a></li><li><a href="http://coolshell.cn/articles/2287.html"  title="C++ 程序员自信心曲线图 - 117,998 人阅读">C++ 程序员自信心曲线图</a></li><li><a href="http://coolshell.cn/articles/3549.html"  title="Android将允许纯C/C++开发应用 - 117,957 人阅读">Android将允许纯C/C++开发应用</a></li><li><a href="http://coolshell.cn/articles/4119.html"  title="如何学好C++语言 - 113,741 人阅读">如何学好C++语言</a></li><li><a href="http://coolshell.cn/articles/4758.html"  title="如何写出无法维护的代码 - 110,752 人阅读">如何写出无法维护的代码</a></li><li><a href="http://coolshell.cn/articles/10739.html"  title="Lua简明教程 - 108,456 人阅读">Lua简明教程</a></li><li><a href="http://coolshell.cn/articles/1846.html"  title="MySQL性能优化的最佳20+条经验 - 107,882 人阅读">MySQL性能优化的最佳20+条经验</a></li><li><a href="http://coolshell.cn/articles/355.html"  title="20本最好的Linux免费书籍 - 105,044 人阅读">20本最好的Linux免费书籍</a></li><li><a href="http://coolshell.cn/articles/11312.html"  title="无插件Vim编程技巧 - 103,112 人阅读">无插件Vim编程技巧</a></li><li><a href="http://coolshell.cn/articles/3008.html"  title="Windows编程革命简史 - 102,411 人阅读">Windows编程革命简史</a></li><li><a href="http://coolshell.cn/articles/1391.html"  title="编程真难啊 - 102,390 人阅读">编程真难啊</a></li><li><a href="http://coolshell.cn/articles/5761.html"  title="深入理解C语言 - 99,928 人阅读">深入理解C语言</a></li><li><a href="http://coolshell.cn/articles/10590.html"  title="二维码的生成细节和原理 - 99,558 人阅读">二维码的生成细节和原理</a></li><li><a href="http://coolshell.cn/articles/10217.html"  title="加班与效率 - 97,201 人阅读">加班与效率</a></li></ul>
+</div><div id="text-400151743" class="widget widget_text"><h3>新浪微博</h3>			<div class="textwidget"><iframe width="100%" height="120" class="share_self"  frameborder="0" scrolling="no" src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=1&speed=0&skin=1&isTitle=1&noborder=1&isWeibo=0&isFans=0&uid=1401880315&verifier=f47cc89f&dpc=1"></iframe></div>
+		</div><div id="tag_cloud-2" class="widget widget_tag_cloud"><h3>标签</h3><div class="tagcloud"><a href='http://coolshell.cn/tag/agile' class='tag-link-17' title='15个话题' style='font-size: 11.853211009174pt;'>agile</a>
+<a href='http://coolshell.cn/tag/ajax' class='tag-link-34' title='11个话题' style='font-size: 10.311926605505pt;'>AJAX</a>
+<a href='http://coolshell.cn/tag/algorithm' class='tag-link-76' title='26个话题' style='font-size: 14.807339449541pt;'>Algorithm</a>
+<a href='http://coolshell.cn/tag/android' class='tag-link-145' title='11个话题' style='font-size: 10.311926605505pt;'>Android</a>
+<a href='http://coolshell.cn/tag/bash' class='tag-link-190' title='9个话题' style='font-size: 9.2844036697248pt;'>Bash</a>
+<a href='http://coolshell.cn/tag/c' class='tag-link-59' title='90个话题' style='font-size: 21.614678899083pt;'>C++</a>
+<a href='http://coolshell.cn/tag/coding' class='tag-link-135' title='25个话题' style='font-size: 14.550458715596pt;'>Coding</a>
+<a href='http://coolshell.cn/tag/css' class='tag-link-96' title='21个话题' style='font-size: 13.651376146789pt;'>CSS</a>
+<a href='http://coolshell.cn/tag/database' class='tag-link-109' title='7个话题' style='font-size: 8pt;'>Database</a>
+<a href='http://coolshell.cn/tag/design' class='tag-link-71' title='18个话题' style='font-size: 12.880733944954pt;'>Design</a>
+<a href='http://coolshell.cn/tag/design-pattern' class='tag-link-25' title='8个话题' style='font-size: 8.6422018348624pt;'>design pattern</a>
+<a href='http://coolshell.cn/tag/ebook' class='tag-link-101' title='15个话题' style='font-size: 11.853211009174pt;'>ebook</a>
+<a href='http://coolshell.cn/tag/flash' class='tag-link-98' title='7个话题' style='font-size: 8pt;'>Flash</a>
+<a href='http://coolshell.cn/tag/game' class='tag-link-125' title='9个话题' style='font-size: 9.2844036697248pt;'>Game</a>
+<a href='http://coolshell.cn/tag/go' class='tag-link-238' title='9个话题' style='font-size: 9.2844036697248pt;'>Go</a>
+<a href='http://coolshell.cn/tag/google' class='tag-link-32' title='32个话题' style='font-size: 15.963302752294pt;'>Google</a>
+<a href='http://coolshell.cn/tag/html' class='tag-link-38' title='33个话题' style='font-size: 16.091743119266pt;'>HTML</a>
+<a href='http://coolshell.cn/tag/ie' class='tag-link-175' title='10个话题' style='font-size: 9.7981651376147pt;'>IE</a>
+<a href='http://coolshell.cn/tag/java' class='tag-link-13' title='48个话题' style='font-size: 18.146788990826pt;'>Java</a>
+<a href='http://coolshell.cn/tag/javascript' class='tag-link-114' title='51个话题' style='font-size: 18.532110091743pt;'>Javascript</a>
+<a href='http://coolshell.cn/tag/jquery' class='tag-link-191' title='11个话题' style='font-size: 10.311926605505pt;'>jQuery</a>
+<a href='http://coolshell.cn/tag/linux' class='tag-link-37' title='65个话题' style='font-size: 19.816513761468pt;'>Linux</a>
+<a href='http://coolshell.cn/tag/mysql' class='tag-link-106' title='7个话题' style='font-size: 8pt;'>MySQL</a>
+<a href='http://coolshell.cn/tag/oop' class='tag-link-245' title='8个话题' style='font-size: 8.6422018348624pt;'>OOP</a>
+<a href='http://coolshell.cn/tag/password' class='tag-link-319' title='8个话题' style='font-size: 8.6422018348624pt;'>password</a>
+<a href='http://coolshell.cn/tag/performance' class='tag-link-120' title='15个话题' style='font-size: 11.853211009174pt;'>Performance</a>
+<a href='http://coolshell.cn/tag/php' class='tag-link-35' title='25个话题' style='font-size: 14.550458715596pt;'>PHP</a>
+<a href='http://coolshell.cn/tag/programmer' class='tag-link-70' title='95个话题' style='font-size: 21.871559633028pt;'>Programmer</a>
+<a href='http://coolshell.cn/tag/programming' class='tag-link-499' title='8个话题' style='font-size: 8.6422018348624pt;'>Programming</a>
+<a href='http://coolshell.cn/tag/programming-language' class='tag-link-115' title='12个话题' style='font-size: 10.697247706422pt;'>programming language</a>
+<a href='http://coolshell.cn/tag/puzzle' class='tag-link-514' title='11个话题' style='font-size: 10.311926605505pt;'>Puzzle</a>
+<a href='http://coolshell.cn/tag/pythondev' class='tag-link-791' title='29个话题' style='font-size: 15.449541284404pt;'>Python</a>
+<a href='http://coolshell.cn/tag/ruby' class='tag-link-69' title='10个话题' style='font-size: 9.7981651376147pt;'>Ruby</a>
+<a href='http://coolshell.cn/tag/sql' class='tag-link-131' title='10个话题' style='font-size: 9.7981651376147pt;'>SQL</a>
+<a href='http://coolshell.cn/tag/tdd' class='tag-link-485' title='8个话题' style='font-size: 8.6422018348624pt;'>TDD</a>
+<a href='http://coolshell.cn/tag/ui' class='tag-link-47' title='12个话题' style='font-size: 10.697247706422pt;'>UI</a>
+<a href='http://coolshell.cn/tag/unix' class='tag-link-21' title='33个话题' style='font-size: 16.091743119266pt;'>Unix</a>
+<a href='http://coolshell.cn/tag/vim' class='tag-link-50' title='19个话题' style='font-size: 13.137614678899pt;'>vim</a>
+<a href='http://coolshell.cn/tag/web' class='tag-link-30' title='40个话题' style='font-size: 17.119266055046pt;'>Web</a>
+<a href='http://coolshell.cn/tag/windows' class='tag-link-49' title='17个话题' style='font-size: 12.623853211009pt;'>Windows</a>
+<a href='http://coolshell.cn/tag/xml' class='tag-link-104' title='8个话题' style='font-size: 8.6422018348624pt;'>XML</a>
+<a href='http://coolshell.cn/tag/%e5%ae%89%e5%85%a8' class='tag-link-318' title='19个话题' style='font-size: 13.137614678899pt;'>安全</a>
+<a href='http://coolshell.cn/tag/%e7%a8%8b%e5%ba%8f%e5%91%98' class='tag-link-58' title='96个话题' style='font-size: 22pt;'>程序员</a>
+<a href='http://coolshell.cn/tag/%e7%ae%97%e6%b3%95' class='tag-link-77' title='10个话题' style='font-size: 9.7981651376147pt;'>算法</a>
+<a href='http://coolshell.cn/tag/interview' class='tag-link-164' title='16个话题' style='font-size: 12.238532110092pt;'>面试</a></div>
+</div></div>
+<!-- sidebar north END -->
+
+<div id="centersidebar">
+
+	<!-- sidebar east START -->
+	<div id="eastsidebar" class="sidebar">
+	<div id="categories-367921423" class="widget widget_categories"><h3>分类目录</h3>		<ul>
+	<li class="cat-item cat-item-189"><a href="http://coolshell.cn/category/proglanguage/dotnet" >.NET编程</a> (3)
+</li>
+	<li class="cat-item cat-item-8"><a href="http://coolshell.cn/category/proglanguage/ajaxdev" >Ajax开发</a> (9)
+</li>
+	<li class="cat-item cat-item-5"><a href="http://coolshell.cn/category/proglanguage/cplusplus" >C/C++语言</a> (71)
+</li>
+	<li class="cat-item cat-item-186"><a href="http://coolshell.cn/category/proglanguage/erlang" >Erlang</a> (1)
+</li>
+	<li class="cat-item cat-item-4"><a href="http://coolshell.cn/category/proglanguage/javadev" >Java语言</a> (32)
+</li>
+	<li class="cat-item cat-item-11"><a href="http://coolshell.cn/category/proglanguage/phpdev" >PHP脚本</a> (11)
+</li>
+	<li class="cat-item cat-item-33"><a href="http://coolshell.cn/category/proglanguage/pythondev" >Python</a> (23)
+</li>
+	<li class="cat-item cat-item-100"><a href="http://coolshell.cn/category/proglanguage/rubydev" >Ruby</a> (5)
+</li>
+	<li class="cat-item cat-item-20"><a href="http://coolshell.cn/category/operatingsystem/unixlinux" >Unix/Linux</a> (74)
+</li>
+	<li class="cat-item cat-item-7"><a href="http://coolshell.cn/category/proglanguage/webdev" >Web开发</a> (103)
+</li>
+	<li class="cat-item cat-item-19"><a href="http://coolshell.cn/category/operatingsystem/mswindows" >Windows</a> (12)
+</li>
+	<li class="cat-item cat-item-195"><a href="http://coolshell.cn/category/itnews" >业界新闻</a> (26)
+</li>
+	<li class="cat-item cat-item-509"><a href="http://coolshell.cn/category/%e4%bc%81%e4%b8%9a%e5%ba%94%e7%94%a8" >企业应用</a> (2)
+</li>
+	<li class="cat-item cat-item-9"><a href="http://coolshell.cn/category/technews" >技术新闻</a> (33)
+</li>
+	<li class="cat-item cat-item-550"><a href="http://coolshell.cn/category/%e6%8a%80%e6%9c%af%e7%ae%a1%e7%90%86" >技术管理</a> (13)
+</li>
+	<li class="cat-item cat-item-12"><a href="http://coolshell.cn/category/techarticle" >技术读物</a> (117)
+</li>
+	<li class="cat-item cat-item-18"><a href="http://coolshell.cn/category/operatingsystem" >操作系统</a> (49)
+</li>
+	<li class="cat-item cat-item-105"><a href="http://coolshell.cn/category/datebase" >数据库</a> (11)
+</li>
+	<li class="cat-item cat-item-10"><a href="http://coolshell.cn/category/misc" >杂项资源</a> (267)
+</li>
+	<li class="cat-item cat-item-15"><a href="http://coolshell.cn/category/process" >流程方法</a> (46)
+</li>
+	<li class="cat-item cat-item-23"><a href="http://coolshell.cn/category/progdesign" >程序设计</a> (84)
+</li>
+	<li class="cat-item cat-item-602"><a href="http://coolshell.cn/category/%e7%b3%bb%e7%bb%9f%e6%9e%b6%e6%9e%84" >系统架构</a> (8)
+</li>
+	<li class="cat-item cat-item-1"><a href="http://coolshell.cn/category/tools" >编程工具</a> (65)
+</li>
+	<li class="cat-item cat-item-3"><a href="http://coolshell.cn/category/proglanguage" >编程语言</a> (174)
+</li>
+	<li class="cat-item cat-item-6"><a href="http://coolshell.cn/category/netsecurity" >网络安全</a> (27)
+</li>
+	<li class="cat-item cat-item-39"><a href="http://coolshell.cn/category/career" >职场生涯</a> (33)
+</li>
+	<li class="cat-item cat-item-271"><a href="http://coolshell.cn/category/funny" >趣味问题</a> (19)
+</li>
+	<li class="cat-item cat-item-52"><a href="http://coolshell.cn/category/story" >轶事趣闻</a> (147)
+</li>
+		</ul>
+</div>	</div>
+	<!-- sidebar east END -->
+
+	<!-- sidebar west START -->
+	<div id="westsidebar" class="sidebar">
+	<div id="archives-2" class="widget widget_archive"><h3>归档</h3>		<ul>
+			<li><a href='http://coolshell.cn/articles/date/2015/12'>2015年十二月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2015/09'>2015年九月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2015/08'>2015年八月</a>&nbsp;(2)</li>
+	<li><a href='http://coolshell.cn/articles/date/2015/04'>2015年四月</a>&nbsp;(4)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/12'>2014年十二月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/11'>2014年十一月</a>&nbsp;(2)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/10'>2014年十月</a>&nbsp;(2)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/09'>2014年九月</a>&nbsp;(2)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/08'>2014年八月</a>&nbsp;(2)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/06'>2014年六月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/05'>2014年五月</a>&nbsp;(4)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/04'>2014年四月</a>&nbsp;(4)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/03'>2014年三月</a>&nbsp;(5)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/02'>2014年二月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2014/01'>2014年一月</a>&nbsp;(2)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/12'>2013年十二月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/11'>2013年十一月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/10'>2013年十月</a>&nbsp;(6)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/08'>2013年八月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/07'>2013年七月</a>&nbsp;(8)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/06'>2013年六月</a>&nbsp;(2)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/05'>2013年五月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/04'>2013年四月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/03'>2013年三月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/02'>2013年二月</a>&nbsp;(5)</li>
+	<li><a href='http://coolshell.cn/articles/date/2013/01'>2013年一月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/12'>2012年十二月</a>&nbsp;(4)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/11'>2012年十一月</a>&nbsp;(4)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/10'>2012年十月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/09'>2012年九月</a>&nbsp;(4)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/08'>2012年八月</a>&nbsp;(8)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/07'>2012年七月</a>&nbsp;(4)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/06'>2012年六月</a>&nbsp;(7)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/05'>2012年五月</a>&nbsp;(6)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/04'>2012年四月</a>&nbsp;(6)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/03'>2012年三月</a>&nbsp;(6)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/02'>2012年二月</a>&nbsp;(3)</li>
+	<li><a href='http://coolshell.cn/articles/date/2012/01'>2012年一月</a>&nbsp;(6)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/12'>2011年十二月</a>&nbsp;(5)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/11'>2011年十一月</a>&nbsp;(9)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/10'>2011年十月</a>&nbsp;(6)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/09'>2011年九月</a>&nbsp;(5)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/08'>2011年八月</a>&nbsp;(14)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/07'>2011年七月</a>&nbsp;(6)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/06'>2011年六月</a>&nbsp;(12)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/05'>2011年五月</a>&nbsp;(5)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/04'>2011年四月</a>&nbsp;(18)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/03'>2011年三月</a>&nbsp;(16)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/02'>2011年二月</a>&nbsp;(16)</li>
+	<li><a href='http://coolshell.cn/articles/date/2011/01'>2011年一月</a>&nbsp;(18)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/12'>2010年十二月</a>&nbsp;(11)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/11'>2010年十一月</a>&nbsp;(11)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/10'>2010年十月</a>&nbsp;(19)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/09'>2010年九月</a>&nbsp;(15)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/08'>2010年八月</a>&nbsp;(10)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/07'>2010年七月</a>&nbsp;(20)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/06'>2010年六月</a>&nbsp;(9)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/05'>2010年五月</a>&nbsp;(13)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/04'>2010年四月</a>&nbsp;(12)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/03'>2010年三月</a>&nbsp;(11)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/02'>2010年二月</a>&nbsp;(7)</li>
+	<li><a href='http://coolshell.cn/articles/date/2010/01'>2010年一月</a>&nbsp;(9)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/12'>2009年十二月</a>&nbsp;(22)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/11'>2009年十一月</a>&nbsp;(27)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/10'>2009年十月</a>&nbsp;(17)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/09'>2009年九月</a>&nbsp;(14)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/08'>2009年八月</a>&nbsp;(21)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/07'>2009年七月</a>&nbsp;(18)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/06'>2009年六月</a>&nbsp;(19)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/05'>2009年五月</a>&nbsp;(27)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/04'>2009年四月</a>&nbsp;(53)</li>
+	<li><a href='http://coolshell.cn/articles/date/2009/03'>2009年三月</a>&nbsp;(43)</li>
+	<li><a href='http://coolshell.cn/articles/date/2008/10'>2008年十月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2007/12'>2007年十二月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2006/11'>2006年十一月</a>&nbsp;(1)</li>
+	<li><a href='http://coolshell.cn/articles/date/2004/06'>2004年六月</a>&nbsp;(1)</li>
+		</ul>
+		</div>	</div>
+	<!-- sidebar west END -->
+	<div class="fixed"></div>
+</div>
+
+<!-- sidebar south START -->
+<div id="southsidebar" class="sidebar">
+<div id="get-recent-comments" class="widget widget_get_recent_comments"><h3>最新评论</h3><div id="get_recent_comments_wrap"><ul>	<li><a href="http://coolshell.cn/articles/10590.html#comment-1815714" title="二维码的生成细节和原理, 2013年10月29日">woniu</a>: 这三个定位图案有白边叫Separators for Postion Detection Patterns。之所以三个而不是四个意思就是三个就可以标识 一个矩形了。 对角线不就可以标识矩形了吗？为啥不用两个？</li>
+	<li><a href="http://coolshell.cn/articles/7829.html#comment-1815691" title="28个Unix/Linux的命令行神器, 2012年07月11日">wxy</a>: 很多命令都么有用过&#8230;&#8230;.</li>
+	<li><a href="http://coolshell.cn/articles/9308.html#comment-1815667" title="“作环保的程序员，从不用百度开始”, 2013年03月23日">苏苏cool</a>: 以前也没觉得百度怎么，一了解百度的历史确实觉得恶心。不过查娱 乐新闻，百度还是有用，相比于bing百度的信息还是多些，如果 可以墙当然用goole更好。做什么事用什么工具吧，百度很恶心 ，但是还有用。</li>
+	<li><a href="http://coolshell.cn/articles/17295.html#comment-1815537" title="让我们来谈谈分工, 2015年12月13日">铝型材厂家</a>: 真不错哦。博客做的好牛逼啊。</li>
+	<li><a href="http://coolshell.cn/articles/4875.html#comment-1815521" title="一个空格引发的惨剧, 2011年06月20日">apeidou</a>: @NER0 好好复习下bash吧， ls -l &#8212; -l</li>
+	<li><a href="http://coolshell.cn/articles/3609.html#comment-1815462" title="那些炒作过度的技术和概念, 2011年01月28日">sqr</a>: 这些分析我大部分认同，作者不是说这些技术完全虚假，或者无用， 只是说普适性没有那么强。我做过几年scrum master, 也看到agile的实践带来的分工合作方面的进步，无论队...</li>
+	<li><a href="http://coolshell.cn/articles/17295.html#comment-1815305" title="让我们来谈谈分工, 2015年12月13日">纪涛</a>: 大神 你的博客做的好棒啊。</li>
+	<li><a href="http://coolshell.cn/articles/17295.html#comment-1814480" title="让我们来谈谈分工, 2015年12月13日">robin</a>: Karl Max是指卡尔.马克思么？如果是的话，他的名字应该是Karl Marx。</li>
+	<li><a href="http://coolshell.cn/articles/3609.html#comment-1814344" title="那些炒作过度的技术和概念, 2011年01月28日">none</a>: 太复杂了，玩真累！</li>
+	<li><a href="http://coolshell.cn/articles/3723.html#comment-1814139" title="（麻省理工免费课程）计算机科学和编程导论, 2011年02月28日">散人</a>: 现在这个有翻译的了 http://open.163.com/special/op encourse/bianchengdaolun.html</li>
+	<li><a href="http://coolshell.cn/articles/17295.html#comment-1814131" title="让我们来谈谈分工, 2015年12月13日">大嘴猴</a>: 这么多人评论。。</li>
+	<li><a href="http://coolshell.cn/guestbook#comment-1814110" title="留言小本, 2009年03月02日">helJ</a>: @trifist 鸟哥Linux私房菜</li>
+	<li><a href="http://coolshell.cn/articles/17029.html#comment-1814083" title="Docker基础技术：Linux Namespace（下）, 2015年04月16日">韩国时尚女装商城</a>: 商品的市价尚未形成之前，不能贱卖商品。</li>
+	<li><a href="http://coolshell.cn/articles/17029.html#comment-1814072" title="Docker基础技术：Linux Namespace（下）, 2015年04月16日">最新韩版女装批发</a>: 什么都想100%得到的人，最后什么也得不到，必然成为失败者。 </li>
+	<li><a href="http://coolshell.cn/articles/17029.html#comment-1814071" title="Docker基础技术：Linux Namespace（下）, 2015年04月16日">韩国时尚女装品牌购物</a>: 冒险和发财是亲兄弟。他们总是结伴而行。</li>
+</ul></div></div><div id="text-2" class="widget widget_text"><h3>友情链接</h3>			<div class="textwidget"><ul class='blogroll'>
+<li><a href="http://blog.csdn.net/haoel" target="_blank" onclick="pageTracker._trackPageview('/outgoing/blog.csdn.net/haoel?referer=http://coolshell.cn');">陈皓的博客</a></li>
+
+<li><a href="http://ifeve.com/" target="_blank" title="促进并发编程的研究和推广" onclick="pageTracker._trackPageview('/outgoing/ifeve.com/?referer=http://coolshell.cn');">并发编程</a></li>
+
+
+<li><a href="http://www.raychase.net/" target="_blank" title="一个啰嗦的程序员" onclick="pageTracker._trackPageview('/outgoing/www.raychase.net/?referer=http://coolshell.cn');">四火的唠叨</a></li>
+
+
+
+<li><a href="http://www.hellogcc.org/" target=_blank title="致力于讨论和学习GNU Toolchain方面的工作组" onclick="pageTracker._trackPageview('/outgoing/www.hellogcc.org//?referer=http://coolshell.cn/');">HelloGcc Working Group</a></li>
+
+<li><a href="http://pangee.cn/" target=_blank title="一名在路上的程序员" onclick="pageTracker._trackPageview('/outgoing/http://blog.lvscar.info/?referer=http://coolshell.cn/');">吕毅的Blog</a></li>
+
+<li><a href="http://www.cnblogs.com/weidagang2046/" target=_blank title="Just for Fun" onclick="pageTracker._trackPageview('/outgoing/http://www.cnblogs.com/weidagang2046/?referer=http://coolshell.cn/');">Todd Wei的Blog</a></li>
+
+<li><a href="http://www.cppfans.org/" target=_blank title="记录我们点滴学习工作生活" onclick="pageTracker._trackPageview('/outgoing/http://www.cppfans.org/?referer=http://coolshell.cn/');">C++爱好者博客</a></li>
+
+<li><a href="http://www.mhtml5.com/" target=_blank title="致力于HTML5在中国的发展与应用" onclick="pageTracker._trackPageview('/outgoing/http://www.mhtml5.com/?referer=http://coolshell.cn/');">HTML5研究小组</a></li>
+
+
+<li><a href="http://zhuwenhao.com/" target=_blank title="朱文昊的中文博客－－专注技术，向往自由" onclick="pageTracker._trackPageview('/outgoing/http://zhuwenhao.com/?referer=http://coolshell.cn/');">朱文昊Albert Zhu</a></li>
+
+
+<li><a href="http://www.cguage.com/" target=_blank title="某VC++软件开发爱好者" onclick="pageTracker._trackPageview('/outgoing/http://www.cguage.com/?referer=http://coolshell.cn/');">C瓜哥的博客</a></li>
+
+
+<li><a href="http://www.kaiyuanba.cn/" target=_blank title="汇聚各种开源项目的中英文混合介绍并分类排列，致力于软件项目的开源事业" onclick="pageTracker._trackPageview('/outgoing/http://www.kaiyuanba.cn/?referer=http://coolshell.cn/');">开源吧</a></li>
+
+
+
+<li><a href="http://HelloACM.com/" target=_blank title="Smart Ideas, Smart Algorithms" onclick="pageTracker._trackPageview('/outgoing/http://HelloACM.com/?referer=http://coolshell.cn/');">ACMer</a></li>
+
+<li><a href="http://chenpeng.info/" target=_blank title="优秀的开源软件让生活更简单" onclick="pageTracker._trackPageview('/outgoing/http://chenpeng.info/?referer=http://coolshell.cn/');">陈鹏个人博客</a></li>
+
+<li><a href="http://www.coderli.com/" target=_blank title="一个普通的coder，coding为了生活，coding因为消遣:-) Just a coder" onclick="pageTracker._trackPageview('/outgoing/http://www.coderli.com/?referer=http://coolshell.cn/');">OneCoder</a></li>
+
+<li><a href="http://www.vimer.me/" target=_blank title="Geek for Tech、Design、Product" onclick="pageTracker._trackPageview('/outgoing/http://www.vimer.me/?referer=http://coolshell.cn/');">More Than Vimer</a></li>
+
+<li><a href="http://www.yunweipai.com" target=_blank title="关注IT技术 | 分享 | 交流 | 记录" onclick="pageTracker._trackPageview('/outgoing/http://www.yunweipai.com/?referer=http://coolshell.cn/');">运维派 </a></li>
+
+<li><a href="http://www.ishuchao.com/" target=_blank title="闲置纸质书的在线漂流平台" onclick="pageTracker._trackPageview('/outgoing/http://www.ishuchao.com/?referer=http://coolshell.cn/');">书巢</a></li></div>
+		</div><div id="meta-3" class="widget widget_meta"><h3>功能</h3>			<ul>
+			<li><a href="http://coolshell.cn/wp-login.php?action=register">注册</a></li>			<li><a href="http://coolshell.cn/wp-login.php">登录</a></li>
+			<li><a href="http://coolshell.cn/feed">文章<abbr title="Really Simple Syndication">RSS</abbr></a></li>
+			<li><a href="http://coolshell.cn/comments/feed">评论<abbr title="Really Simple Syndication">RSS</abbr></a></li>
+			<li><a href="https://cn.wordpress.org/" title="基于WordPress，一个优美、先进的个人信息发布平台。">WordPress.org</a></li>			</ul>
+			</div><div id="text-400151742" class="widget widget_text">			<div class="textwidget"><script src="http://s50.cnzz.com/stat.php?id=1785679&web_id=1785679&show=pic1" language="JavaScript" charset="gb2312"></script>
+
+
+
+</div>
+		</div></div>
+<!-- sidebar south END -->
+
+</div>
+<!-- sidebar END -->
+	<div class="fixed"></div>
+</div>
+<!-- content END -->
+
+<!-- footer START -->
+<div id="footer">
+	<a id="gotop" href="#" onclick="MGJS.goTop();return false;">回到顶部</a>
+	<a id="powered" href="http://wordpress.org/">WordPress</a>
+	<div id="copyright">
+		版权所有 &copy; 2004-2016 酷 壳 &#8211; CoolShell.cn	</div>
+	<div id="themeinfo">
+		主题由 <a href="http://www.neoease.com/">NeoEase</a> 提供, 通过 <a href="http://validator.w3.org/check?uri=referer">XHTML 1.1</a> 和 <a href="http://jigsaw.w3.org/css-validator/check/referer?profile=css3">CSS 3</a> 验证.	</div>
+</div>
+<!-- footer END -->
+
+</div>
+<!-- container END -->
+</div>
+<!-- wrap END -->
+
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shCore.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushCSharp.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushPhp.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushJScript.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushJava.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushVb.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushSql.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushXml.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushDelphi.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushPython.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushRuby.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushCss.js"></script>
+<script class="javascript" src="http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/shBrushCpp.js"></script>
+<script class="javascript">
+dp.SyntaxHighlighter.ClipboardSwf = 'http://coolshell.cn//wp-content/plugins/google-syntax-highlighter/Scripts/clipboard.swf';
+dp.SyntaxHighlighter.HighlightAll('code');
+</script>
+    <!-- Start of StatCounter Code -->
+    <script>
+    <!-- 
+        var sc_project=8326668; 
+        var sc_security="cccb27f2"; 
+      var sc_invisible=1;
+        var scJsHost = (("https:" == document.location.protocol) ?
+        "https://secure." : "http://www.");
+    //-->
+document.write("<sc"+"ript src='" +scJsHost +"statcounter.com/counter/counter.js'></"+"script>");
+</script>
+<noscript><div class="statcounter"><a title="web analytics" href="https://statcounter.com/"><img class="statcounter" src="https://c.statcounter.com/8326668/0/cccb27f2/1/" alt="web analytics" /></a></div></noscript>   
+    <!-- End of StatCounter Code -->
+<!-- Powered by WPtouch: 4.0.3 --><script type='text/javascript' src='http://coolshell.cn//wp-content/plugins/akismet/_inc/form.js?ver=3.1.7'></script>
+<script type='text/javascript' src='http://coolshell.cn//wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shCore.js?ver=3.0.9b'></script>
+<script type='text/javascript' src='http://coolshell.cn//wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushCpp.js?ver=3.0.9b'></script>
+<script type='text/javascript' src='http://coolshell.cn//wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushBash.js?ver=3.0.9b'></script>
+<script type='text/javascript'>
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "http://coolshell.cn//wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "http://coolshell.cn//wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeDefault.css?ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '帮助';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = '无法找到Brush：';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush不能设置 html-script选项';
+	SyntaxHighlighter.defaults['class-name'] = 'coolshell_syntaxhighlighter';
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+</script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var ratingsL10n = {"plugin_url":"http:\/\/coolshell.cn\/wp-content\/plugins\/wp-postratings","ajax_url":"http:\/\/coolshell.cn\/wp-admin\/admin-ajax.php","text_wait":"Please rate only 1 post at a time.","image":"stars_crystal","image_ext":"gif","max":"5","show_loading":"1","show_fading":"1","custom":"0"};
+var ratings_mouseover_image=new Image();ratings_mouseover_image.src=ratingsL10n.plugin_url+"/images/"+ratingsL10n.image+"/rating_over."+ratingsL10n.image_ext;;
+/* ]]> */
+</script>
+<script type='text/javascript' src='http://coolshell.cn//wp-content/plugins/wp-postratings/postratings-js.js?ver=1.83'></script>
+<script type='text/javascript'>
+/* <![CDATA[ */
+var viewsCacheL10n = {"admin_ajax_url":"http:\/\/coolshell.cn\/wp-admin\/admin-ajax.php","post_id":"17225"};
+/* ]]> */
+</script>
+<script type='text/javascript' src='http://coolshell.cn//wp-content/plugins/wp-postviews/postviews-cache.js?ver=1.68'></script>
+<script type='text/javascript' src='http://coolshell.cn//wp-includes/js/wp-embed.min.js?ver=4.4.2'></script>
+<script src="http://s50.cnzz.com/stat.php?id=1785679&web_id=1785679&show=pic1" language="JavaScript" charset="gb2312"></script>
+
+
+</body>
+</html>
+
+
+<script src="http://coolshell.cn//wp-content/themes/inove/js/1.9.0/jquery.min.js"></script>
+<script src="http://coolshell.cn//wp-content/themes/inove/js/jquery.bpopup-0.8.0.min.js"></script>
+
+<script type="text/javascript">
+;(function($) {
+    $(function() {
+        var url=document.referrer;
+        if ( url && ( url.search("http://")>-1 || url.search("https://")>-1 ) ) {
+            var refurl =  url.match(/:\/\/(.[^/]+)/)[1];
+            if(refurl.indexOf("baidu.com")>-1){
+                $('#nobaidu_dlg').bPopup();
+            }
+        }
+    });
+
+})(jQuery);
+</script>
+
+
+
+<div id="nobaidu_dlg" style="background-color:#fff; border-radius:15px;color:#000;display:none;padding:20px;min-width:450px;min-height:180px;">
+    <!--<span class="bClose" style="cursor:pointer; position:absolute; right:10px;top:5px;">x<span/>-->
+    <img src="http://coolshell.cn//wp-content/themes/inove/img/nobaidu.jpg" align="left">
+     <p style="margin-left:200px;margin-top: 20px; line-height: 30px;">
+     检测到你还在使用百度这个搜索引擎，<br/>
+     作为一个程序员，这是一种自暴自弃！<br/>
+     <br/>
+     </p>
+     <p align="center" style="margin-top:20px;">
+     <b><a href="http://coolshell.cn/articles/7186.html">作环保的程序员，从不用百度开始！</a></b>
+     </p>
+</div>
+
+
+<!-- Dynamic page generated in 0.407 seconds. -->
+<!-- Cached page generated by WP-Super-Cache on 2016-03-31 00:59:56 -->
+
+<!-- Compression = gzip -->

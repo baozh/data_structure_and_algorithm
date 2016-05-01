@@ -1,0 +1,64 @@
+考试
+
+1. Moving Average
+给定一移动个窗口，计算在这个窗口内的平均数，举例：
+
+MovingAverage ma = new MovingAverage(2);
+ma.next(1) return 1
+ma.next(3) return 2
+ma.next(4) return 3.5
+
+设计这个class，并给出测试用例
+
+2. Total Difference Strings
+给一个string列表，判断有多少个不同的string，返回个数
+相同的定义：字符串长度相等并从左到右，或从右往左是同样的字符
+abc和cba为视为相同
+
+举例：
+abc
+cba
+abc
+aaa
+
+返回不同的个数：2
+
+3. Binary Tree Print
+给出一个二叉树，打印所有从root到叶子节点的路径
+
+     3
+ 1      5
+   2   6  7 
+      8
+[3,1,2],[3,5,6,8], [3,5,7]
+
+2) bonus question: print in beautiful order, indent needed
+
+  3
+ 1
+  2
+-----
+  3
+   5
+  6
+ 8 
+-----
+3
+ 5
+  7
+
+4. Output Random Numbers
+设计一种随机数生成器，保证范围从0到N－1，但除了黑名单中的数字，其他的数字都有相同的选取概率
+
+N = 10
+blacklist = [5,7]
+
+numbers in [0,1,2,3,4,6,8,9] are equally chosen every time.
+
+5. Design Shopping Cart
+如何设计一个购物车，可以从商品列表中添加商品，修改数量，生成订单，如果商品数量在1亿以上，如何设计架构保证安全稳定的，
+(multi tier, MVC, SOA)
+
+bonus：如何设计抢购页面, suppose we have limited products and time
+
+

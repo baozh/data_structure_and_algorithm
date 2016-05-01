@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0049)http://www.hawstein.com/posts/lru-cache-impl.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><script type="text/javascript" async="" src="./如何用C++实现一个LRU Cache_files/ga.js"></script><script src="./如何用C++实现一个LRU Cache_files/id.php" charset="utf-8"></script><script src="./如何用C++实现一个LRU Cache_files/shares.php" charset="utf-8"></script>
+    
+    <title>如何用C++实现一个LRU Cache</title>
+    <meta name="author" content="Hawstein">
+    <link href="http://hawstein.com/atom.xml" rel="alternate" title="Hawstein&#39;s Blog" type="application/atom+xml">
+
+    <!-- Homepage CSS -->
+    <link rel="stylesheet" href="./如何用C++实现一个LRU Cache_files/bootstrap.min.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="./如何用C++实现一个LRU Cache_files/bootstrap-responsive.css" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="./如何用C++实现一个LRU Cache_files/app.css" type="text/css" media="screen" charset="utf-8">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+
+    <!-- syntax highlighting CSS -->
+    <link rel="stylesheet" href="./如何用C++实现一个LRU Cache_files/syntax.css" type="text/css" media="screen" charset="utf-8">
+
+    <link rel="shortcut icon" href="http://www.hawstein.com/assets/ico/favicon.ico">
+      <!-- Fonts -->
+      <link href="./如何用C++实现一个LRU Cache_files/css" rel="stylesheet" type="text/css">
+      <script type="text/javascript" async="" src="./如何用C++实现一个LRU Cache_files/embed.js"></script></head>
+
+      <body><link href="./如何用C++实现一个LRU Cache_files/jiathis_counter.css" rel="stylesheet" type="text/css"><link href="./如何用C++实现一个LRU Cache_files/jiathis_share.css" rel="stylesheet" type="text/css"><iframe frameborder="0" style="position: absolute; display: none; opacity: 0;"></iframe><div class="jiathis_style" style="position: absolute; z-index: 1000000000; display: none; top: 50%; left: 50%; overflow: auto;"></div><div class="jiathis_style" style="position: absolute; z-index: 1000000000; display: none; overflow: auto;"></div><iframe frameborder="0" src="./如何用C++实现一个LRU Cache_files/jiathis_utility.html" style="display: none;"></iframe>
+	<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="http://www.hawstein.com/">Hawstein's Blog</a>
+	<ul class="nav">
+	  <li class="active"><a href="http://www.hawstein.com/">Home</a></li>
+	  <li><a href="http://www.hawstein.com/archive.html">Archive</a></li>
+	  <li><a href="http://www.hawstein.com/categories.html">Categories</a></li>
+	  <li><a href="http://www.hawstein.com/sitemap.html">Sitemap</a></li>
+	  <li><a href="http://www.hawstein.com/about.html">About</a></li>
+	</ul>
+	<ul class="nav pull-right">
+	  <li><a href="http://www.hawstein.com/atom.xml">Subscribe</a></li>
+	</ul>
+    </div>
+  </div>
+</div>
+
+	<div class="container">
+	  <div id="post">
+<h1>
+  <a href="./如何用C++实现一个LRU Cache_files/如何用C++实现一个LRU Cache.html">如何用C++实现一个LRU Cache</a>
+</h1>
+<div class="authoring">
+  July 23, 2013
+</div>
+<div style="line-height:180%;">
+  作者：Hawstein<br>
+  出处：<a href="./如何用C++实现一个LRU Cache_files/如何用C++实现一个LRU Cache.html">http://hawstein.com/posts/lru-cache-impl.html</a><br>
+  声明：本文采用以下协议进行授权： <a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh">自由转载-非商用-非衍生-保持署名|Creative Commons BY-NC-ND 3.0</a> ，转载请注明作者及出处。<br><br>
+</div>
+
+<h2>什么是LRU Cache</h2>
+
+<p>LRU是Least Recently Used的缩写，意思是最近最少使用，它是一种Cache替换算法。
+什么是Cache？狭义的Cache指的是位于CPU和主存间的快速RAM，
+通常它不像系统主存那样使用DRAM技术，而使用昂贵但较快速的SRAM技术。
+广义上的Cache指的是位于速度相差较大的两种硬件之间，
+用于协调两者数据传输速度差异的结构。除了CPU与主存之间有Cache，
+内存与硬盘之间也有Cache，乃至在硬盘与网络之间也有某种意义上的Cache──
+称为Internet临时文件夹或网络内容缓存等。</p>
+
+<p>Cache的容量有限，因此当Cache的容量用完后，而又有新的内容需要添加进来时，
+就需要挑选并舍弃原有的部分内容，从而腾出空间来放新内容。LRU Cache
+的替换原则就是将最近最少使用的内容替换掉。其实，LRU译成<code>最久未使用</code>会更形象，
+因为该算法每次替换掉的就是一段时间内最久没有使用过的内容。</p>
+
+<h2>数据结构</h2>
+
+<p>LRU的典型实现是<code>hash map + doubly linked list</code>，
+双向链表用于存储数据结点，并且它是按照结点最近被使用的时间来存储的。
+如果一个结点被访问了，
+我们有理由相信它在接下来的一段时间被访问的概率要大于其它结点。于是，
+我们把它放到双向链表的头部。当我们往双向链表里插入一个结点，
+我们也有可能很快就会使用到它，同样把它插入到头部。
+我们使用这种方式不断地调整着双向链表，链表尾部的结点自然也就是最近一段时间，
+最久没有使用到的结点。那么，当我们的Cache满了，
+需要替换掉的就是双向链表中最后的那个结点(不是尾结点，头尾结点不存储实际内容)。</p>
+
+<p>如下是双向链表示意图，注意头尾结点不存储实际内容：</p>
+
+<pre><code>头 --&gt; 结 --&gt; 结 --&gt; 结 --&gt; 尾
+结     点     点     点     结
+点 &lt;-- 1  &lt;-- 2 &lt;-- 3  &lt;-- 点
+</code></pre>
+
+<p>假如上图Cache已满了，我们要替换的就是结点3。</p>
+
+<p>哈希表的作用是什么呢？如果没有哈希表，我们要访问某个结点，就需要顺序地一个个找，
+时间复杂度是O(n)。使用哈希表可以让我们在O(1)的时间找到想要访问的结点，
+或者返回未找到。</p>
+
+<h2>Cache接口</h2>
+
+<p>Cache主要有两个接口：</p>
+
+<div class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="n">T</span> <span class="nf">Get</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">Put</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">,</span> <span class="n">T</span> <span class="n">data</span><span class="p">);</span></code></pre></div>
+
+
+<p>当我们通过键值来访问类型为T的数据时，调用Get函数。如果键值为key的数据已经在
+Cache中，那就返回该数据，同时将存储该数据的结点移到双向链表头部。
+如果我们查询的数据不在Cache中，我们就可以通过Put接口将数据插入双向链表中。
+如果此时的Cache还没满，那么我们将新结点插入到链表头部，
+同时用哈希表保存结点的键值及结点地址对。如果Cache已经满了，
+我们就将链表中的最后一个结点(注意不是尾结点)的内容替换为新内容，
+然后移动到头部，更新哈希表。</p>
+
+<h2>C++代码</h2>
+
+<p>注意，hash map并不是C++标准的一部分，我使用的是Linux下g++ 4.6.1，
+hash_map放在/usr/include/c++/4.6/ext下，需要使用<code>__gnu_cxx</code>名空间，
+Linux平台可以切换到c++的include目录：cd /usr/include/c++/版本
+然后grep -iR “hash_map” ./
+查看在哪个文件中，一般头文件的最后几行会提示它所在的名空间。
+其它平台请自行探索。XD</p>
+
+<p>当然如果你已经很fashion地在使用C++ 11，就不会有这些小困扰了。</p>
+
+<div class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="c1">// A simple LRU cache written in C++</span>
+<span class="c1">// Hash map + doubly linked list</span>
+<span class="cp">#include &lt;iostream&gt;</span>
+<span class="cp">#include &lt;vector&gt;</span>
+<span class="cp">#include &lt;ext/hash_map&gt;</span>
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">__gnu_cxx</span><span class="p">;</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">K</span><span class="p">,</span> <span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">struct</span> <span class="n">Node</span><span class="p">{</span>
+    <span class="n">K</span> <span class="n">key</span><span class="p">;</span>
+    <span class="n">T</span> <span class="n">data</span><span class="p">;</span>
+    <span class="n">Node</span> <span class="o">*</span><span class="n">prev</span><span class="p">,</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">template</span> <span class="o">&lt;</span><span class="k">class</span> <span class="nc">K</span><span class="p">,</span> <span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">LRUCache</span><span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">LRUCache</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">){</span>
+        <span class="n">entries_</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span><span class="p">[</span><span class="n">size</span><span class="p">];</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">size</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="c1">// 存储可用结点的地址</span>
+            <span class="n">free_entries_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">entries_</span><span class="o">+</span><span class="n">i</span><span class="p">);</span>
+        <span class="n">head_</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span><span class="p">;</span>
+        <span class="n">tail_</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span><span class="p">;</span>
+        <span class="n">head_</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+        <span class="n">head_</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">tail_</span><span class="p">;</span>
+        <span class="n">tail_</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">head_</span><span class="p">;</span>
+        <span class="n">tail_</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="o">~</span><span class="n">LRUCache</span><span class="p">(){</span>
+        <span class="k">delete</span> <span class="n">head_</span><span class="p">;</span>
+        <span class="k">delete</span> <span class="n">tail_</span><span class="p">;</span>
+        <span class="k">delete</span><span class="p">[]</span> <span class="n">entries_</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">Put</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">,</span> <span class="n">T</span> <span class="n">data</span><span class="p">){</span>
+        <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">node</span> <span class="o">=</span> <span class="n">hashmap_</span><span class="p">[</span><span class="n">key</span><span class="p">];</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">node</span><span class="p">){</span> <span class="c1">// node exists</span>
+            <span class="n">detach</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+            <span class="n">node</span><span class="o">-&gt;</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+            <span class="n">attach</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span><span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">free_entries_</span><span class="p">.</span><span class="n">empty</span><span class="p">()){</span><span class="c1">// 可用结点为空，即cache已满</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">tail_</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+                <span class="n">detach</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+                <span class="n">hashmap_</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span><span class="n">node</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span><span class="p">{</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">free_entries_</span><span class="p">.</span><span class="n">back</span><span class="p">();</span>
+                <span class="n">free_entries_</span><span class="p">.</span><span class="n">pop_back</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="n">node</span><span class="o">-&gt;</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="p">;</span>
+            <span class="n">node</span><span class="o">-&gt;</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">;</span>
+            <span class="n">hashmap_</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="p">;</span>
+            <span class="n">attach</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">T</span> <span class="n">Get</span><span class="p">(</span><span class="n">K</span> <span class="n">key</span><span class="p">){</span>
+        <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">node</span> <span class="o">=</span> <span class="n">hashmap_</span><span class="p">[</span><span class="n">key</span><span class="p">];</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">node</span><span class="p">){</span>
+            <span class="n">detach</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+            <span class="n">attach</span><span class="p">(</span><span class="n">node</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">node</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span><span class="p">{</span><span class="c1">// 如果cache中没有，返回T的默认值。与hashmap行为一致</span>
+            <span class="k">return</span> <span class="n">T</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="k">private</span><span class="o">:</span>
+    <span class="c1">// 分离结点</span>
+    <span class="kt">void</span> <span class="n">detach</span><span class="p">(</span><span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;*</span> <span class="n">node</span><span class="p">){</span>
+        <span class="n">node</span><span class="o">-&gt;</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">node</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+        <span class="n">node</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">node</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// 将结点插入头部</span>
+    <span class="kt">void</span> <span class="n">attach</span><span class="p">(</span><span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;*</span> <span class="n">node</span><span class="p">){</span>
+        <span class="n">node</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">head_</span><span class="p">;</span>
+        <span class="n">node</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">head_</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+        <span class="n">head_</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">node</span><span class="p">;</span>
+        <span class="n">node</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">node</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="k">private</span><span class="o">:</span>
+    <span class="n">hash_map</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span> <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;*</span> <span class="o">&gt;</span> <span class="n">hashmap_</span><span class="p">;</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;*</span> <span class="o">&gt;</span> <span class="n">free_entries_</span><span class="p">;</span> <span class="c1">// 存储可用结点的地址</span>
+    <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">head_</span><span class="p">,</span> <span class="o">*</span><span class="n">tail_</span><span class="p">;</span>
+    <span class="n">Node</span><span class="o">&lt;</span><span class="n">K</span><span class="p">,</span><span class="n">T</span><span class="o">&gt;</span> <span class="o">*</span><span class="n">entries_</span><span class="p">;</span> <span class="c1">// 双向链表中的结点</span>
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(){</span>
+    <span class="n">hash_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">map</span><span class="p">;</span>
+    <span class="n">map</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="o">=</span> <span class="mi">999</span><span class="p">;</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">map</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">map</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">LRUCache</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">string</span><span class="o">&gt;</span> <span class="n">lru_cache</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>
+    <span class="n">lru_cache</span><span class="p">.</span><span class="n">Put</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">"one"</span><span class="p">);</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">lru_cache</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="n">endl</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">lru_cache</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="s">""</span><span class="p">)</span>
+        <span class="n">lru_cache</span><span class="p">.</span><span class="n">Put</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">"two"</span><span class="p">);</span>
+    <span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">lru_cache</span><span class="p">.</span><span class="n">Get</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span></code></pre></div>
+
+
+<h2>参考链接</h2>
+
+<p><a href="http://www.cs.uml.edu/~jlu1/doc/codes/lruCache.html">http://www.cs.uml.edu/~jlu1/doc/codes/lruCache.html</a></p>
+
+</div>
+
+<br>
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+<a class="jiathis_button_tsina" title="分享到新浪微博"><span class="jiathis_txt jtico jtico_tsina"></span></a>
+<a class="jiathis_button_tqq" title="分享到腾讯微博"><span class="jiathis_txt jtico jtico_tqq"></span></a>
+<a class="jiathis_button_tsohu" title="分享到搜狐微博"><span class="jiathis_txt jtico jtico_tsohu"></span></a>
+<a class="jiathis_button_t163" title="分享到网易微博"><span class="jiathis_txt jtico jtico_t163"></span></a>
+<a class="jiathis_button_douban" title="分享到豆瓣"><span class="jiathis_txt jtico jtico_douban"></span></a>
+<a class="jiathis_button_renren" title="分享到人人网"><span class="jiathis_txt jtico jtico_renren"></span></a>
+<a class="jiathis_button_zhuaxia"></a>
+<a class="jiathis_button_fanfou" title="分享到饭否"><span class="jiathis_txt jtico jtico_fanfou"></span></a>
+<a class="jiathis_button_twitter" title="分享到Twitter"><span class="jiathis_txt jtico jtico_twitter"></span></a>
+<a class="jiathis_button_fb" title="分享到Facebook"><span class="jiathis_txt jtico jtico_fb"></span></a>
+<a class="jiathis_button_gmail" title="分享到Gmail邮箱"><span class="jiathis_txt jtico jtico_gmail"></span></a>
+<a class="jiathis_button_linkedin" title="分享到LinkedIn"><span class="jiathis_txt jtico jtico_linkedin"></span></a>
+<a class="jiathis_button_friendfeed" title="分享到FriendFeed"><span class="jiathis_txt jtico jtico_friendfeed"></span></a>
+<a class="jiathis_button_digg" title="分享到Digg"><span class="jiathis_txt jtico jtico_digg"></span></a>
+<a href="http://www.jiathis.com/share?uid=1939314" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank"></a>
+<a class="jiathis_counter_style"><span class="jiathis_button_expanded jiathis_counter jiathis_bubble_style" id="jiathis_counter_27" title="累计分享2次">2</span></a>
+</div>
+<script type="text/javascript">
+var jiathis_config={
+	data_track_clickback:true,
+	summary:" // By @Hawstein ",
+	hideMore:false
+}
+</script>
+
+<script type="text/javascript" src="./如何用C++实现一个LRU Cache_files/jia.js" charset="utf-8"></script><script type="text/javascript" src="./如何用C++实现一个LRU Cache_files/plugin.client.js" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+<br>
+
+<div id="related">
+  <h2>Random Posts</h2>
+  <ul class="posts">
+    
+      <li><span>19 Dec 2015</span> » <a href="http://www.hawstein.com/posts/scala-weekly-20151219.html">Scala 周报 [20151213 - 20151219]</a></li>
+    
+      <li><span>12 Dec 2015</span> » <a href="http://www.hawstein.com/posts/scala-weekly-20151212.html">Scala 周报 [20151206 - 20151212]</a></li>
+    
+      <li><span>05 Dec 2015</span> » <a href="http://www.hawstein.com/posts/scala-weekly-20151205.html">Scala 周报 [20151129 - 20151205]</a></li>
+    
+      <li><span>28 Nov 2015</span> » <a href="http://www.hawstein.com/posts/scala-weekly-20151128.html">Scala 周报 [20151122 - 20151128]</a></li>
+    
+      <li><span>21 Nov 2015</span> » <a href="http://www.hawstein.com/posts/scala-weekly-20151121.html">Scala 周报 [20151115 - 20151121]</a></li>
+    
+  </ul>
+</div>
+<div id="disqus_thread"><iframe id="dsq-app2" name="dsq-app2" allowtransparency="true" frameborder="0" scrolling="no" tabindex="0" title="Disqus" width="100%" src="./如何用C++实现一个LRU Cache_files/saved_resource.html" style="width: 100% !important; border: none !important; overflow: hidden !important; height: 301px !important;" horizontalscrolling="no" verticalscrolling="no"></iframe></div>
+<script type="text/javascript">
+    
+    var disqus_shortname = 'hawstein';
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the &lt;a href="http://disqus.com/?ref_noscript"&gt;comments powered by Disqus.&lt;/a&gt;</noscript>
+
+
+	  <div id="footer">
+  Powered by <a href="https://github.com/mojombo/jekyll">Jekyll</a> and <a href="http://twitter.github.com/bootstrap/">Bootstrap</a>.  Last updated at 2015-12-23 01:38:04 +0000.
+</div>
+
+	</div>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script src="./如何用C++实现一个LRU Cache_files/app.js"></script>
+	<script type="text/javascript">
+
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-37837952-1']);
+  _gaq.push(['_trackPageview']);
+
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+
+</script>
+
+      
+
+</body></html>

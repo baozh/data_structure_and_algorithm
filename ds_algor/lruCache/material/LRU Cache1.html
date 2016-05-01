@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0051)http://www.cs.uml.edu/~jlu1/doc/codes/lruCache.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="author" content="Jian">
+    
+	<link href="./LRU Cache1_files/prettify.css" type="text/css" rel="stylesheet">
+	<script src="./LRU Cache1_files/prettify.js" type="text/javascript"></script>
+	<script src="./LRU Cache1_files/fold.js" type="text/javascript"></script>
+    <link href="./LRU Cache1_files/mycss.css" rel="stylesheet" type="text/css">
+    <title> LRU Cache </title>
+</head>
+ 
+<body onload="prettyPrint()">
+<h1> Implement a LRU Cache in C++ </h1>
+<b>
+Date: 2012-06-12  <br>
+By: Jian Lu     <br>
+</b>
+<hr><p>
+
+<br><br>
+</p><div class="block_div">
+<h3> Question: Implement LRU cache algorithm </h3>
+<hr><p>
+Implement the LRU cache algorithm with the following interface: </p><p>
+T get(K key); <br>
+void put(K key, T data);<br>
+</p></div>
+<br><br>
+
+<h3> What is LRU?</h3><p>
+Least Recently Used (LRU) is a family of caching algorithms, which discards the least recently used items first.
+This algorithm requires keeping track of when the item was used, which is expensive if one wants to make sure the algorithm
+always discards the least recently used item. General implementations of this technique require keeping "age bits"
+for cache-lines and track the "Least Recently Used" cache-line based on age-bits.
+
+</p><h3> Data Structure</h3><p>
+The key data structure of the algorithm is the combination of <strong>Hash Map</strong> and <strong>Doubly-Linked List</strong>.
+We initialize a Hash Map in a pre-defined size to store <key,data> pairs,
+and use Doubly-Linked List to index the <key,data> pairs in the order of data age.</key,data></key,data></p><p>
+
+</p><h3> Maintain the Cache </h3><p>
+Once the data with key K is queried, the function get(K) is first called.
+If the data of key K is in the cache, the cache just returns the data and refresh the data in the linked list.
+To refresh data T in the list, we move the item of data T to the head of the list.
+Otherwise, if the data T of key K is not in the cache, we need to insert the pair <k,t> into the list.
+If the cache is not full, we insert <k,t> into the hash map, and add the <k,t> item at the head of the list.
+If the cache is already full, we get the tail of the list and update it with <k,t>, then move this item to the head of the list.</k,t></k,t></k,t></k,t></p><p>
+
+</p><h3> C++ Code </h3><p>
+In C++, &lt;hash_map&gt; header file is not in Standard C++ Library,
+so <strong>stdext</strong> namespace should be used for the members of &lt;hash_map&gt;.
+
+</p><div class="code_div">
+<span id="button1" onclick="$use(&#39;content1&#39;, &#39;button1&#39;)" style="color:blue">[-]</span>
+C++ Code of LRU Cache 
+<pre id="content1" class="prettyprint lang-cpp" style="height: 506px; overflow-y: scroll; display: block;"><span class="com">#include</span><span class="pln"> </span><span class="str">&lt;iostream&gt;</span><span class="pln">
+</span><span class="com">#include</span><span class="pln"> </span><span class="str">&lt;vector&gt;</span><span class="pln">
+</span><span class="com">#include</span><span class="pln"> </span><span class="str">&lt;hash_map&gt;</span><span class="pln">
+
+</span><span class="kwd">using</span><span class="pln"> </span><span class="kwd">namespace</span><span class="pln"> std</span><span class="pun">;</span><span class="pln">
+</span><span class="kwd">using</span><span class="pln"> </span><span class="kwd">namespace</span><span class="pln"> stdext</span><span class="pun">;</span><span class="pln">
+
+</span><span class="kwd">template</span><span class="pun">&lt;</span><span class="kwd">class</span><span class="pln"> K</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">class</span><span class="pln"> T</span><span class="pun">&gt;</span><span class="pln">
+</span><span class="kwd">struct</span><span class="pln"> </span><span class="typ">LRUCacheEntry</span><span class="pln">
+</span><span class="pun">{</span><span class="pln">
+	K key</span><span class="pun">;</span><span class="pln">
+	T data</span><span class="pun">;</span><span class="pln">
+	</span><span class="typ">LRUCacheEntry</span><span class="pun">*</span><span class="pln"> prev</span><span class="pun">;</span><span class="pln">
+	</span><span class="typ">LRUCacheEntry</span><span class="pun">*</span><span class="pln"> next</span><span class="pun">;</span><span class="pln">
+</span><span class="pun">};</span><span class="pln">
+
+</span><span class="kwd">template</span><span class="pun">&lt;</span><span class="kwd">class</span><span class="pln"> K</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">class</span><span class="pln"> T</span><span class="pun">&gt;</span><span class="pln">
+</span><span class="kwd">class</span><span class="pln"> </span><span class="typ">LRUCache</span><span class="pln">
+</span><span class="pun">{</span><span class="pln">
+</span><span class="kwd">private</span><span class="pun">:</span><span class="pln">
+	hash_map</span><span class="pun">&lt;</span><span class="pln"> K</span><span class="pun">,</span><span class="pln"> </span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;*</span><span class="pln"> </span><span class="pun">&gt;</span><span class="pln">	_mapping</span><span class="pun">;</span><span class="pln">
+	</span><span class="typ">vector</span><span class="pun">&lt;</span><span class="pln"> </span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;*</span><span class="pln"> </span><span class="pun">&gt;</span><span class="pln">		_freeEntries</span><span class="pun">;</span><span class="pln">
+	</span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;</span><span class="pln"> </span><span class="pun">*</span><span class="pln">			head</span><span class="pun">;</span><span class="pln">
+	</span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;</span><span class="pln"> </span><span class="pun">*</span><span class="pln">			tail</span><span class="pun">;</span><span class="pln">
+	</span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;</span><span class="pln"> </span><span class="pun">*</span><span class="pln">			entries</span><span class="pun">;</span><span class="pln">
+</span><span class="kwd">public</span><span class="pun">:</span><span class="pln">
+	</span><span class="typ">LRUCache</span><span class="pun">(</span><span class="typ">size_t</span><span class="pln"> size</span><span class="pun">){</span><span class="pln">
+		entries </span><span class="pun">=</span><span class="pln"> </span><span class="kwd">new</span><span class="pln"> </span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;[</span><span class="pln">size</span><span class="pun">];</span><span class="pln">
+		</span><span class="kwd">for</span><span class="pln"> </span><span class="pun">(</span><span class="typ">int</span><span class="pln"> i</span><span class="pun">=</span><span class="lit">0</span><span class="pun">;</span><span class="pln"> i</span><span class="pun">&lt;</span><span class="pln">size</span><span class="pun">;</span><span class="pln"> i</span><span class="pun">++)</span><span class="pln">
+			_freeEntries</span><span class="pun">.</span><span class="pln">push_back</span><span class="pun">(</span><span class="pln">entries</span><span class="pun">+</span><span class="pln">i</span><span class="pun">);</span><span class="pln">
+		head </span><span class="pun">=</span><span class="pln"> </span><span class="kwd">new</span><span class="pln"> </span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;;</span><span class="pln">
+		tail </span><span class="pun">=</span><span class="pln"> </span><span class="kwd">new</span><span class="pln"> </span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;;</span><span class="pln">
+		head</span><span class="pun">-&gt;</span><span class="pln">prev </span><span class="pun">=</span><span class="pln"> NULL</span><span class="pun">;</span><span class="pln">
+		head</span><span class="pun">-&gt;</span><span class="pln">next </span><span class="pun">=</span><span class="pln"> tail</span><span class="pun">;</span><span class="pln">
+		tail</span><span class="pun">-&gt;</span><span class="pln">next </span><span class="pun">=</span><span class="pln"> NULL</span><span class="pun">;</span><span class="pln">
+		tail</span><span class="pun">-&gt;</span><span class="pln">prev </span><span class="pun">=</span><span class="pln"> head</span><span class="pun">;</span><span class="pln">
+	</span><span class="pun">}</span><span class="pln">
+	</span><span class="pun">~</span><span class="typ">LRUCache</span><span class="pun">()</span><span class="pln">
+	</span><span class="pun">{</span><span class="pln">
+		</span><span class="kwd">delete</span><span class="pln"> head</span><span class="pun">;</span><span class="pln">
+		</span><span class="kwd">delete</span><span class="pln"> tail</span><span class="pun">;</span><span class="pln">
+		</span><span class="kwd">delete</span><span class="pln"> </span><span class="pun">[]</span><span class="pln"> entries</span><span class="pun">;</span><span class="pln">
+	</span><span class="pun">}</span><span class="pln">
+	</span><span class="kwd">void</span><span class="pln"> put</span><span class="pun">(</span><span class="pln">K key</span><span class="pun">,</span><span class="pln"> T data</span><span class="pun">)</span><span class="pln">
+	</span><span class="pun">{</span><span class="pln">
+		</span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;*</span><span class="pln"> node </span><span class="pun">=</span><span class="pln"> _mapping</span><span class="pun">[</span><span class="pln">key</span><span class="pun">];</span><span class="pln">
+		</span><span class="kwd">if</span><span class="pun">(</span><span class="pln">node</span><span class="pun">)</span><span class="pln">
+		</span><span class="pun">{</span><span class="pln">
+			</span><span class="com">// refresh the link list</span><span class="pln">
+			detach</span><span class="pun">(</span><span class="pln">node</span><span class="pun">);</span><span class="pln">
+			node</span><span class="pun">-&gt;</span><span class="pln">data </span><span class="pun">=</span><span class="pln"> data</span><span class="pun">;</span><span class="pln">
+			attach</span><span class="pun">(</span><span class="pln">node</span><span class="pun">);</span><span class="pln">
+		</span><span class="pun">}</span><span class="pln">
+		</span><span class="kwd">else</span><span class="pun">{</span><span class="pln">
+			</span><span class="kwd">if</span><span class="pln"> </span><span class="pun">(</span><span class="pln"> _freeEntries</span><span class="pun">.</span><span class="pln">empty</span><span class="pun">()</span><span class="pln"> </span><span class="pun">)</span><span class="pln">
+			</span><span class="pun">{</span><span class="pln">
+				node </span><span class="pun">=</span><span class="pln"> tail</span><span class="pun">-&gt;</span><span class="pln">prev</span><span class="pun">;</span><span class="pln">
+				detach</span><span class="pun">(</span><span class="pln">node</span><span class="pun">);</span><span class="pln">
+				_mapping</span><span class="pun">.</span><span class="pln">erase</span><span class="pun">(</span><span class="pln">node</span><span class="pun">-&gt;</span><span class="pln">key</span><span class="pun">);</span><span class="pln">
+				node</span><span class="pun">-&gt;</span><span class="pln">data </span><span class="pun">=</span><span class="pln"> data</span><span class="pun">;</span><span class="pln">
+				node</span><span class="pun">-&gt;</span><span class="pln">key </span><span class="pun">=</span><span class="pln"> key</span><span class="pun">;</span><span class="pln">
+				_mapping</span><span class="pun">[</span><span class="pln">key</span><span class="pun">]</span><span class="pln"> </span><span class="pun">=</span><span class="pln"> node</span><span class="pun">;</span><span class="pln">
+				attach</span><span class="pun">(</span><span class="pln">node</span><span class="pun">);</span><span class="pln">
+			</span><span class="pun">}</span><span class="pln">
+			</span><span class="kwd">else</span><span class="pun">{</span><span class="pln">
+				node </span><span class="pun">=</span><span class="pln"> _freeEntries</span><span class="pun">.</span><span class="pln">back</span><span class="pun">();</span><span class="pln">
+				_freeEntries</span><span class="pun">.</span><span class="pln">pop_back</span><span class="pun">();</span><span class="pln">
+				node</span><span class="pun">-&gt;</span><span class="pln">key </span><span class="pun">=</span><span class="pln"> key</span><span class="pun">;</span><span class="pln">
+				node</span><span class="pun">-&gt;</span><span class="pln">data </span><span class="pun">=</span><span class="pln"> data</span><span class="pun">;</span><span class="pln">
+				_mapping</span><span class="pun">[</span><span class="pln">key</span><span class="pun">]</span><span class="pln"> </span><span class="pun">=</span><span class="pln"> node</span><span class="pun">;</span><span class="pln">
+				attach</span><span class="pun">(</span><span class="pln">node</span><span class="pun">);</span><span class="pln">
+			</span><span class="pun">}</span><span class="pln">
+		</span><span class="pun">}</span><span class="pln">
+	</span><span class="pun">}</span><span class="pln">
+
+	T get</span><span class="pun">(</span><span class="pln">K key</span><span class="pun">)</span><span class="pln">
+	</span><span class="pun">{</span><span class="pln">
+		</span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;*</span><span class="pln"> node </span><span class="pun">=</span><span class="pln"> _mapping</span><span class="pun">[</span><span class="pln">key</span><span class="pun">];</span><span class="pln">
+		</span><span class="kwd">if</span><span class="pun">(</span><span class="pln">node</span><span class="pun">)</span><span class="pln">
+		</span><span class="pun">{</span><span class="pln">
+			detach</span><span class="pun">(</span><span class="pln">node</span><span class="pun">);</span><span class="pln">
+			attach</span><span class="pun">(</span><span class="pln">node</span><span class="pun">);</span><span class="pln">
+			</span><span class="kwd">return</span><span class="pln"> node</span><span class="pun">-&gt;</span><span class="pln">data</span><span class="pun">;</span><span class="pln">
+		</span><span class="pun">}</span><span class="pln">
+		</span><span class="kwd">else</span><span class="pln"> </span><span class="kwd">return</span><span class="pln"> NULL</span><span class="pun">;</span><span class="pln">
+	</span><span class="pun">}</span><span class="pln">
+
+</span><span class="kwd">private</span><span class="pun">:</span><span class="pln">
+	</span><span class="kwd">void</span><span class="pln"> detach</span><span class="pun">(</span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;*</span><span class="pln"> node</span><span class="pun">)</span><span class="pln">
+	</span><span class="pun">{</span><span class="pln">
+		node</span><span class="pun">-&gt;</span><span class="pln">prev</span><span class="pun">-&gt;</span><span class="pln">next </span><span class="pun">=</span><span class="pln"> node</span><span class="pun">-&gt;</span><span class="pln">next</span><span class="pun">;</span><span class="pln">
+		node</span><span class="pun">-&gt;</span><span class="pln">next</span><span class="pun">-&gt;</span><span class="pln">prev </span><span class="pun">=</span><span class="pln"> node</span><span class="pun">-&gt;</span><span class="pln">prev</span><span class="pun">;</span><span class="pln">
+	</span><span class="pun">}</span><span class="pln">
+	</span><span class="kwd">void</span><span class="pln"> attach</span><span class="pun">(</span><span class="typ">LRUCacheEntry</span><span class="pun">&lt;</span><span class="pln">K</span><span class="pun">,</span><span class="pln">T</span><span class="pun">&gt;*</span><span class="pln"> node</span><span class="pun">)</span><span class="pln">
+	</span><span class="pun">{</span><span class="pln">
+		node</span><span class="pun">-&gt;</span><span class="pln">next </span><span class="pun">=</span><span class="pln"> head</span><span class="pun">-&gt;</span><span class="pln">next</span><span class="pun">;</span><span class="pln">
+		node</span><span class="pun">-&gt;</span><span class="pln">prev </span><span class="pun">=</span><span class="pln"> head</span><span class="pun">;</span><span class="pln">
+		head</span><span class="pun">-&gt;</span><span class="pln">next </span><span class="pun">=</span><span class="pln"> node</span><span class="pun">;</span><span class="pln">
+		node</span><span class="pun">-&gt;</span><span class="pln">next</span><span class="pun">-&gt;</span><span class="pln">prev </span><span class="pun">=</span><span class="pln"> node</span><span class="pun">;</span><span class="pln">
+	</span><span class="pun">}</span><span class="pln">
+</span><span class="pun">};</span><span class="pln">
+
+</span></pre>
+</div>
+
+
+</body></html>

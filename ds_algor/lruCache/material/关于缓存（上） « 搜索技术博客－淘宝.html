@@ -1,0 +1,629 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0100)http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN"><head profile="http://gmpg.org/xfn/11"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+
+	<title>关于缓存（上） «  搜索技术博客－淘宝</title>
+
+	<link rel="stylesheet" href="./关于缓存（上） « 搜索技术博客－淘宝_files/style.css" type="text/css" media="screen">
+	<link rel="pingback" href="http://www.searchtb.com/xmlrpc.php">
+        <script type="text/javascript" async="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/ga.js"></script><script type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/jquery.js"></script>
+	
+	<link rel="alternate" type="application/rss+xml" title="搜索技术博客－淘宝 » Feed" href="http://www.searchtb.com/feed">
+<link rel="alternate" type="application/rss+xml" title="搜索技术博客－淘宝 » 评论Feed" href="http://www.searchtb.com/comments/feed">
+<link rel="alternate" type="application/rss+xml" title="搜索技术博客－淘宝 » 关于缓存（上）评论Feed" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html/feed">
+<link rel="stylesheet" id="wp-syntax-css-css" href="./关于缓存（上） « 搜索技术博客－淘宝_files/wp-syntax.css" type="text/css" media="all">
+<script type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/comment-reply.min.js"></script>
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.searchtb.com/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://www.searchtb.com/wp-includes/wlwmanifest.xml"> 
+<link rel="prev" title="google group varint 无损压缩解压算法的实现 改进版" href="http://www.searchtb.com/2013/04/google-group-varint-compression-high-efficient-implementation.html">
+<link rel="next" title="PForDelta 索引压缩算法的高效实现" href="http://www.searchtb.com/2013/04/pfordelta.html">
+
+<link rel="canonical" href="./关于缓存（上） « 搜索技术博客－淘宝_files/关于缓存（上） « 搜索技术博客－淘宝.html">
+<link rel="shortlink" href="http://www.searchtb.com/?p=3192">
+		<script type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/jquery.min.js"></script>
+			<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+<link rel="stylesheet" type="text/css" href="./关于缓存（上） « 搜索技术博客－淘宝_files/shCore.css"><link rel="stylesheet" type="text/css" href="./关于缓存（上） « 搜索技术博客－淘宝_files/shThemeDefault.css"><style type="text/css" id="syntaxhighlighteranchor"></style>
+</head>
+
+<body class="single single-post postid-3192 single-format-standard">
+
+	<div id="nav">
+	    <div class="container">
+	        <ul><li class=" page_item"><a href="http://www.searchtb.com/" title=""><span>Home</span></a></li><li class="page_item page-item-44"><a href="http://www.searchtb.com/%e6%ac%a2%e8%bf%8e%e5%8a%a0%e7%9b%9f"><span>欢迎加盟</span></a></li>
+<li class="page_item page-item-2"><a href="http://www.searchtb.com/about"><span>关于我们</span></a></li>
+<li class="page_item page-item-880"><a href="http://www.searchtb.com/hot"><span>热门文章</span></a></li>
+</ul>
+	    </div>
+	</div>
+
+	<div id="header" class="clear">
+	    <div class="container cheader">
+	    	<h1 id="blogtitle"><a href="http://www.searchtb.com/">搜索技术博客－淘宝</a></h1><p class="blogdesc">关注技术  关注搜索  关注淘宝</p>		</div>
+
+	</div> <!-- end of #header -->
+	<div id="navcat">
+    	<div class="container">
+    	<!--Error 4 Start -->	<ul>	<li class="cat-item cat-item-152"><a href="http://www.searchtb.com/category/graph-database" title="查看graph database下的所有文章">graph database</a>
+</li>
+	<li class="cat-item cat-item-119"><a href="http://www.searchtb.com/category/optimization" title="包含硬件比如CPU相关设置、操作系统内核和glibc、应用程序调优等方面的文章。">性能优化</a>
+</li>
+	<li class="cat-item cat-item-7"><a href="http://www.searchtb.com/category/%e6%90%9c%e7%b4%a2%e5%bc%95%e6%93%8e" title="查看搜索引擎下的所有文章">搜索引擎</a>
+</li>
+	<li class="cat-item cat-item-8"><a href="http://www.searchtb.com/category/%e5%89%8d%e7%ab%af%e6%8a%80%e6%9c%af" title="查看前端技术下的所有文章">前端技术</a>
+</li>
+	<li class="cat-item cat-item-9"><a href="http://www.searchtb.com/category/%e6%95%b0%e6%8d%ae%e6%8c%96%e6%8e%98" title="查看数据挖掘下的所有文章">数据挖掘</a>
+</li>
+	<li class="cat-item cat-item-10"><a href="http://www.searchtb.com/category/%e5%af%bc%e8%b4%ad%e6%90%9c%e7%b4%a2" title="查看导购搜索下的所有文章">导购搜索</a>
+</li>
+	<li class="cat-item cat-item-11"><a href="http://www.searchtb.com/category/%e6%90%9c%e7%b4%a2%e5%8a%a8%e6%80%81" title="查看搜索动态下的所有文章">搜索动态</a>
+</li>
+	<li class="cat-item cat-item-76"><a href="http://www.searchtb.com/category/distributed-system" title="查看分布式技术下的所有文章">分布式技术</a>
+</li>
+	<li class="cat-item cat-item-1"><a href="http://www.searchtb.com/category/uncategorized" title="查看其他下的所有文章">其他</a>
+</li>
+</ul><!--Error 4 End -->
+		</div>
+	</div>
+	<div class="clear"></div>
+
+<div id="wrapper" class="container">
+
+
+	<div id="content" class="subcontainer fleft">
+	
+		<div class="post-3192 post type-post status-publish format-standard hentry category-optimization" id="post-3192">
+		
+			<div class="posthead">
+				<div class="maindate fleft">
+					24<br>
+				 	<span>四 </span>
+				</div>
+			
+                                <h1 class="maintitle fleft"><a href="./关于缓存（上） « 搜索技术博客－淘宝_files/关于缓存（上） « 搜索技术博客－淘宝.html" rel="bookmark" title="Permanent Link to 关于缓存（上）">关于缓存（上）</a>
+                                <div class="clear"></div>
+                                 <span class="author">   <a href="http://www.searchtb.com/author/liaoran" title="由liaoran发布" rel="author">liaoran</a> </span>
+                                </h1>
+				<div class="clear"></div>
+			</div>
+			
+			<div class="entry">
+				<h1>缓存概述</h1>
+<p>商业世界中常说的一句话是“现金为王”。在技术世界里，与之相近的一个说法是“缓存为王”。</p>
+<p>缓存在构建高性能web站点中有着举足轻重的作用， sql优化， 算法优化所带来的效果可能远远不如缓存带来的优化效果。但是缓存的使用并不是零成本的，首先的一个问题是，任何缓存的增加，都会带来两大问题：</p>
+<ul>
+<li>数据不一致。</li>
+<li>系统复杂度大幅度增加。</li>
+</ul>
+<p>解决这两个问题需要以下一些方法，首先是去掉缓存。不要为了用缓存而用缓存，缓存不必要时，应该果断去掉，从而降低系统出错的可能性，降低系统复杂度。有些对数据实时性，准确性要求极高的系统，不能使用缓存。其次是分析需求，不同的业务会有不同的缓存策略，仔细分析变化与不变的数据，将不变的数据长时间缓存，变化的数据根据数据的业务意义和实时性要求动态调整缓存时间和存储方式。最后就是增加开发人员自身的能力，后面会详细提及各种问题的处理方法。</p>
+<p>关于缓存的设计其实也脱离不了计算机基本的设计思想。数据结构与算法是计算机软件设计永恒的主题，算法的优劣需要考虑算法的时间和空间复杂度。多数优秀的算法都采用空间换时间的方式。涉及到缓存也不例外，缓存的设计需要考虑缓存的占用空间和命中率。我们当然希望缓存占用空间小，命中率高。命中率高是缓存设计的重要考察因素， 是提高系统性能的关键。占用空间越小，需要的成本越低。低成本，高效能的缓存设计是我们追求的目标。这没有固定的设计方法和公式，需要根据不同的业务灵活调整，但是，关于缓存在业务开发中的设计方法，有一些比较常用的思路与模式，借鉴这些模式，我们可以复用或创新，解决新的业务中所出现的问题，下面我就简单总结一些常用的缓存设计方法和应用场景，抛砖引玉，希望能对以后的开发有所帮助。</p>
+<h1>缓存不可变对象的复杂计算</h1>
+<p>第一个简单的缓存方式叫做缓存不可变对象的复杂计算。这是一个很常见的缓存设计方法。不可变对象有两个的好处和一个坏处。这个坏处就是不可变对象不能共享内存空间，从而导致内存不可复用，每次修改不可变对象时，并不能修改原有内存空间的值，而是从新创造一个新的对象，将原有的指针指向新的对象。两个好处包括：</p>
+<ul>
+<li>不可变对象不会出现线程安全问题，这也是scala，erlang等语言的全新线程模型的基础（这个话题以后探讨）。</li>
+<li>不可变对象可以使用缓存提高某些复杂算法的计算速度。</li>
+</ul>
+<p>当我们设计不可变对象时，某些复杂计算就可以在第一次调用时计算一次，之后将结果缓存起来，第二次调用时就可以直接返回缓存中的值，从而提高效率。这里面的经典实例是java中String对象计算hashCode的方法。该方法的大致实现如下：</p>
+<div><div id="highlighter_990146" class="syntaxhighlighter  cpp"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div><div class="line number9 index8 alt2">9</div><div class="line number10 index9 alt1">10</div><div class="line number11 index10 alt2">11</div><div class="line number12 index11 alt1">12</div><div class="line number13 index12 alt2">13</div><div class="line number14 index13 alt1">14</div><div class="line number15 index14 alt2">15</div><div class="line number16 index15 alt1">16</div><div class="line number17 index16 alt2">17</div><div class="line number18 index17 alt1">18</div><div class="line number19 index18 alt2">19</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp comments">/** Cache the hash code for the string */</code></div><div class="line number2 index1 alt1"><code class="cpp keyword bold">private</code> <code class="cpp color1 bold">int</code> <code class="cpp plain">hash; </code><code class="cpp comments">// Default to 0public int hashCode() {int h = hash;int len = count;</code></div><div class="line number3 index2 alt2"><code class="cpp keyword bold">if</code> <code class="cpp plain">(h == 0 &amp;&amp; len &gt; 0) {</code></div><div class="line number4 index3 alt1"><code class="cpp color1 bold">int</code> <code class="cpp plain">off = offset;</code></div><div class="line number5 index4 alt2">&nbsp;</div><div class="line number6 index5 alt1"><code class="cpp color1 bold">char</code> <code class="cpp plain">val[] = value;</code></div><div class="line number7 index6 alt2">&nbsp;</div><div class="line number8 index7 alt1"><code class="cpp keyword bold">for</code> <code class="cpp plain">(</code><code class="cpp color1 bold">int</code> <code class="cpp plain">i = 0; i &lt; len; i++) {</code></div><div class="line number9 index8 alt2">&nbsp;</div><div class="line number10 index9 alt1"><code class="cpp plain">h = 31*h + val[off++];</code></div><div class="line number11 index10 alt2"><code class="cpp plain">}</code></div><div class="line number12 index11 alt1">&nbsp;</div><div class="line number13 index12 alt2"><code class="cpp plain">hash = h;</code></div><div class="line number14 index13 alt1">&nbsp;</div><div class="line number15 index14 alt2"><code class="cpp plain">}</code></div><div class="line number16 index15 alt1">&nbsp;</div><div class="line number17 index16 alt2"><code class="cpp keyword bold">return</code> <code class="cpp plain">h;</code></div><div class="line number18 index17 alt1">&nbsp;</div><div class="line number19 index18 alt2"><code class="cpp plain">}</code></div></div></td></tr></tbody></table></div></div>
+<p style="padding-left: 30px;">从这段代码可以看出， String对象缓存了一个hash的字段，第一次调用hashCode方法时，由于hash == 0 ，那么就做一次复杂的hashCode计算，之后的任何一次对该对象hashCode方法调用，都不需要进行计算，直接返回hash字段的值即可。这种方法只限于不可变对象。关于如何实现不可变对象，就不再这里讨论了。</p>
+<h1>数据库的缓存</h1>
+<p>把关系数据库类比成文件是我们通常的一种思考方式，但是数据库本身的内容远比一个文件库丰富的多。当我们访问数据库时，我们面对的不是数据库文件本身，而是一个叫做RDBMS的系统，RDBMS将很多访问操作透明化，但是因此产生的访问效率提高远远超过于直接访问文件。数据库缓存就是其中的一种方式，以mysql数据库为例，默认情况下，mysql没有开启查询缓存，我们可以通过在MySQL安装目录中的my.ini文件设置查询缓冲。设置也非常简单， 有以下3个参数：</p>
+<ul>
+<li><strong>query_cache_size</strong>:&nbsp; 总查询缓冲区大小</li>
+<li><strong>query_cache_type: </strong>可以设置为0(OFF)，1(ON)或者2(DEMOND)，分别表示完全不使用query cache，除显式要求不使用query cache（使用sql_no_cache）之外的所有的select都使用query cache，只有显示要求才使用query cache（使用sql_cache）</li>
+<li><strong>query_cache_limit</strong>:&nbsp; 单个查询的缓冲区大小</li>
+</ul>
+<p>这样，每一次的select语句的查询结果就可以被缓存起来，下次如果数据库没有DML语句（DML语句就是基本的insert update delete语句）操作时，同样的select语句就会从缓存中直接返回结果，一旦有DML语句执行，那么所有的与该表相关的查询缓存全部失效，这样可以有效的保持数据一致性。由此可见，对于查询操作远远多于DML操作时，查询缓存的开放可以有效提高查询效率，但是如果查询操作与DML操作交替进行较多时，由于频繁的缓存失效，每一次的查询都不能从缓存中获取，不仅如此，还要每次写缓存，因此反而会引起效率的低下，这就是由于缓存频繁失效导致的缓存命中率极低。因此，灵活的根据业务设计缓存容量和策略是提高mysql性能的有效手段。对于这种调优策略由于我们无法触碰线上真实的数据库环境，暂时无法实施。与此类似，java开发中与数据库交互的ibatis框架也提供了相应的缓存方法。Ibatis配置可以配置一个CacheModel模块儿，用来缓存查询，基本配置如下：（注意，这是一个示意性的配置，并不是真实的配置文件，真是配置方法，参考ibatis文档）</p>
+<div><div id="highlighter_511719" class="syntaxhighlighter  cpp"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div><div class="line number9 index8 alt2">9</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">&lt;cacheModel&gt;</code></div><div class="line number2 index1 alt1">&nbsp;</div><div class="line number3 index2 alt2"><code class="cpp plain">&lt;flushInterval minutes=</code><code class="cpp string">"5"</code> <code class="cpp plain">/&gt;</code></div><div class="line number4 index3 alt1">&nbsp;</div><div class="line number5 index4 alt2"><code class="cpp plain">&lt;flushOnExecute statement=</code><code class="cpp string">"DML操作"</code> <code class="cpp plain">/&gt;</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="cpp plain">&lt;property name=</code><code class="cpp string">"reference-type"</code> <code class="cpp plain">value=</code><code class="cpp string">"SOFT"</code> <code class="cpp plain">/&gt;</code></div><div class="line number8 index7 alt1">&nbsp;</div><div class="line number9 index8 alt2"><code class="cpp plain">&lt;/cacheModel&gt;</code></div></div></td></tr></tbody></table></div></div>
+<p>这段配置中，可以通过cacheID标识一个缓存策略，type可以配置多种缓存存储方式，flushInterval标识定时刷新缓存策略，flushOnExecute标识DML动作刷新策略，reference-type标识缓存的配置为软引用（关于强引用，软引用，弱引用，虚引用的区别可以看看这篇文章 <a href="http://www.shangxueba.com/jingyan/88126.html">http://www.shangxueba.com/jingyan/88126.html</a>），这样java虚拟机会在内存不足时将缓存的内容垃圾回收。使用时，就可以在select配置中增加cacheModel=”XXXcacheID”来设置额缓存策略。从而达到同样的数据库缓存需求。但是对于分布式系统的环境，这种使用本地内存的策略并不适合，因为当DML语句执行时，只会更新一台机器的本地内存，其他机器的内存并不更新，这时的查询操作如果落在另一台机器上一定会出现数据不一致现象。</p>
+<h1>分布式环境下的本地缓存</h1>
+<p>利用本地缓存来存储变化率极低的数据是一个不错的方法。在分布式系统中，本地缓存效率最高，直接存储于服务器本地内存中，但是由于分布式扩展的特征，每台服务器都会存储一份数据在内存中，这样的结果导致如果是集群多服务器共享数据，那么存储于本地内存一定造成数据不一致，比如如果一个论坛系统部署于集群环境，如果将帖子的浏览数存储于本地内存，那么产生的数据都是错误的，因为当一台机器的内存浏览数增加时，另一台机器并不会增加。因此，存放于本地缓存的数据需要符合两个条件之一。变化率极低的数据，或者，对准确性没有要求的数据。这两种都有分别的应用场景。</p>
+<p>对于第一种情况比如调用forest接口获得类目数据时，可以考虑使用本地缓存。Forest类目数据是一个变化缓慢的数据，这个数据可以每天更新一次，正适合使用缓存的场景。更新缓存时，有以下两种更新策略。第一种是写一个定时任务每天执行，调用forest接口，更新缓存，这样做的好处是如果更新失败，可以继续使用旧的数据。另一种方法是在获取forest数据时，内置更新定时器，如果没有到更新时间就返回缓存的值，到了更新时间，自动调用forest接口，更新缓存，更新计时器。</p>
+<p>代码如下：</p>
+<div><div id="highlighter_561469" class="syntaxhighlighter  cpp"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div><div class="line number9 index8 alt2">9</div><div class="line number10 index9 alt1">10</div><div class="line number11 index10 alt2">11</div><div class="line number12 index11 alt1">12</div><div class="line number13 index12 alt2">13</div><div class="line number14 index13 alt1">14</div><div class="line number15 index14 alt2">15</div><div class="line number16 index15 alt1">16</div><div class="line number17 index16 alt2">17</div><div class="line number18 index17 alt1">18</div><div class="line number19 index18 alt2">19</div><div class="line number20 index19 alt1">20</div><div class="line number21 index20 alt2">21</div><div class="line number22 index21 alt1">22</div><div class="line number23 index22 alt2">23</div><div class="line number24 index23 alt1">24</div><div class="line number25 index24 alt2">25</div><div class="line number26 index25 alt1">26</div><div class="line number27 index26 alt2">27</div><div class="line number28 index27 alt1">28</div><div class="line number29 index28 alt2">29</div><div class="line number30 index29 alt1">30</div><div class="line number31 index30 alt2">31</div><div class="line number32 index31 alt1">32</div><div class="line number33 index32 alt2">33</div><div class="line number34 index33 alt1">34</div><div class="line number35 index34 alt2">35</div><div class="line number36 index35 alt1">36</div><div class="line number37 index36 alt2">37</div><div class="line number38 index37 alt1">38</div><div class="line number39 index38 alt2">39</div><div class="line number40 index39 alt1">40</div><div class="line number41 index40 alt2">41</div><div class="line number42 index41 alt1">42</div><div class="line number43 index42 alt2">43</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp keyword bold">public</code> <code class="cpp plain">Map&lt;Integer, ForestItem&gt; getForestFromCache() {</code></div><div class="line number2 index1 alt1">&nbsp;</div><div class="line number3 index2 alt2"><code class="cpp plain">Map&lt;Integer, ForestItem&gt; map = null;</code></div><div class="line number4 index3 alt1">&nbsp;</div><div class="line number5 index4 alt2"><code class="cpp color1 bold">long</code> <code class="cpp plain">currentTime = System.currentTimeMillis();</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="cpp keyword bold">if</code> <code class="cpp plain">(forestMap.getMap() == null || forestMap.getExpireTime() &lt; currentTime) {</code></div><div class="line number8 index7 alt1">&nbsp;</div><div class="line number9 index8 alt2"><code class="cpp keyword bold">try</code> <code class="cpp plain">{</code></div><div class="line number10 index9 alt1">&nbsp;</div><div class="line number11 index10 alt2"><code class="cpp plain">map = getCategoryPairs(); </code><code class="cpp comments">// 调用forest接口获得最新数据</code></div><div class="line number12 index11 alt1">&nbsp;</div><div class="line number13 index12 alt2"><code class="cpp plain">} </code><code class="cpp keyword bold">catch</code> <code class="cpp plain">(Exception e) {</code></div><div class="line number14 index13 alt1">&nbsp;</div><div class="line number15 index14 alt2"><code class="cpp plain">logger.error(</code><code class="cpp string">"获取Frorest类目错误"</code><code class="cpp plain">, e);</code></div><div class="line number16 index15 alt1">&nbsp;</div><div class="line number17 index16 alt2"><code class="cpp plain">}</code></div><div class="line number18 index17 alt1">&nbsp;</div><div class="line number19 index18 alt2"><code class="cpp plain">forestMap.setExpireTime(currentTime + 12 * 60 * 60 * 1000);</code></div><div class="line number20 index19 alt1">&nbsp;</div><div class="line number21 index20 alt2"><code class="cpp plain">forestMap.setMap(map);</code></div><div class="line number22 index21 alt1">&nbsp;</div><div class="line number23 index22 alt2"><code class="cpp plain">} </code><code class="cpp keyword bold">else</code> <code class="cpp plain">{</code></div><div class="line number24 index23 alt1">&nbsp;</div><div class="line number25 index24 alt2"><code class="cpp plain">map = forestMap.getMap();</code></div><div class="line number26 index25 alt1">&nbsp;</div><div class="line number27 index26 alt2"><code class="cpp plain">}</code></div><div class="line number28 index27 alt1">&nbsp;</div><div class="line number29 index28 alt2"><code class="cpp keyword bold">return</code> <code class="cpp plain">map;</code></div><div class="line number30 index29 alt1">&nbsp;</div><div class="line number31 index30 alt2"><code class="cpp plain">}</code></div><div class="line number32 index31 alt1">&nbsp;</div><div class="line number33 index32 alt2"><code class="cpp comments">// 带内置定时器的map</code></div><div class="line number34 index33 alt1">&nbsp;</div><div class="line number35 index34 alt2"><code class="cpp keyword bold">static</code> <code class="cpp keyword bold">class</code> <code class="cpp plain">ForestMap {</code></div><div class="line number36 index35 alt1">&nbsp;</div><div class="line number37 index36 alt2"><code class="cpp keyword bold">private</code> <code class="cpp plain">Map&lt;Integer, ForestItem&gt; map;</code></div><div class="line number38 index37 alt1">&nbsp;</div><div class="line number39 index38 alt2"><code class="cpp keyword bold">private</code> <code class="cpp color1 bold">long</code> <code class="cpp plain">expireTime = System.currentTimeMillis();</code></div><div class="line number40 index39 alt1">&nbsp;</div><div class="line number41 index40 alt2"><code class="cpp comments">// ---getter/setter---</code></div><div class="line number42 index41 alt1">&nbsp;</div><div class="line number43 index42 alt2"><code class="cpp plain">}</code></div></div></td></tr></tbody></table></div></div>
+<p>这段代码内置的更新计时器，可以自己定制更新时间，也是比较好的实现方式。</p>
+<p>第二种情况是对准确率要求不高的数据。这种应用场景将放到 分布式缓存计数器一节中实现秒杀部分来介绍。</p>
+<h1>缓存写操作</h1>
+<p>另一个缓存的实现场景被称为缓存写入，web系统中80%的操作是读取，20%的操作是写入，但是某些场景中，读取即伴随着写入，比如浏览帖子记录浏览数。这种操作会把写入操作的频度极大增加。那么，如何处理这种问题？首先是分析需求，浏览数展现给用户，表现的是一个帖子的热度，用户关心的是帖子的浏览量级而不是具体的浏览数字，那么浏览数只要能够体现出浏览量级就可满足需求。那么就不需要每次浏览帖子都更新数据库。只需按照量级，将一定量级的浏览数缓存起来，到一定量级更新一次数据库，比如，100浏览以内的，可以每10条更新一次，1000浏览以后，可以每100更新1次，后面如果量级再高，可以每1000更新一次，这样就极大的减少了写入数据库的次数，同时保证了浏览数的相对正确性。极大减小了系统压力。代码如下：</p>
+<div><div id="highlighter_307907" class="syntaxhighlighter  cpp"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div><div class="line number9 index8 alt2">9</div><div class="line number10 index9 alt1">10</div><div class="line number11 index10 alt2">11</div><div class="line number12 index11 alt1">12</div><div class="line number13 index12 alt2">13</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp comments">// user 浏览</code></div><div class="line number2 index1 alt1">&nbsp;</div><div class="line number3 index2 alt2"><code class="cpp plain">currviewCount = Cache.incrViewCount(1);</code></div><div class="line number4 index3 alt1">&nbsp;</div><div class="line number5 index4 alt2"><code class="cpp plain">If (currviewCount &lt; 100 &amp;&amp; viewCount % 10 == 0) {</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="cpp plain">updateViewCountToDB();</code></div><div class="line number8 index7 alt1">&nbsp;</div><div class="line number9 index8 alt2"><code class="cpp plain">} </code><code class="cpp keyword bold">else</code> <code class="cpp keyword bold">if</code> <code class="cpp plain">(currviewCount &gt;= 100 &amp;&amp; currviewCount &lt; 1000 &amp;&amp; viewCount % 100 == 0) {</code></div><div class="line number10 index9 alt1">&nbsp;</div><div class="line number11 index10 alt2"><code class="cpp plain">updateViewCountToDB();</code></div><div class="line number12 index11 alt1">&nbsp;</div><div class="line number13 index12 alt2"><code class="cpp plain">} </code><code class="cpp keyword bold">else</code> <code class="cpp keyword bold">if</code> <code class="cpp plain">……</code></div></div></td></tr></tbody></table></div></div>
+<p>读取浏览数时，只需每次从缓存中取出数据即可。如果缓存系统异常了，那么可以考虑优雅的降级，将浏览数隐藏起来，保证主贴和评论内容仍然可以显示，不受影响。后面缓存系统恢复后，可以再次根据数据库的浏览数字段通过后台任务初始化缓存中的浏览数。（浏览数是一个对准确性要求不高的数值，只是反映帖子的相对热度，所以无需准确初始化）</p>
+<h1>分布式缓存</h1>
+<p>分布式对象缓存是开发中常见的缓存技术，将某些对象存入缓存，防止每次读取时都需要动态的从数据库取出数据，虽然数据库本身的RDBMS中也有缓存（后面讨论），但是大量的请求压到数据库会是整个系统不可用的风险加大，合理使用缓存，可以极大减少数据库压力。这种使用方式有一个经典的缓存操作流程：</p>
+<div><div id="highlighter_444455" class="syntaxhighlighter  cpp"><table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td class="gutter"><div class="line number1 index0 alt2">1</div><div class="line number2 index1 alt1">2</div><div class="line number3 index2 alt2">3</div><div class="line number4 index3 alt1">4</div><div class="line number5 index4 alt2">5</div><div class="line number6 index5 alt1">6</div><div class="line number7 index6 alt2">7</div><div class="line number8 index7 alt1">8</div><div class="line number9 index8 alt2">9</div><div class="line number10 index9 alt1">10</div><div class="line number11 index10 alt2">11</div><div class="line number12 index11 alt1">12</div><div class="line number13 index12 alt2">13</div><div class="line number14 index13 alt1">14</div><div class="line number15 index14 alt2">15</div><div class="line number16 index15 alt1">16</div><div class="line number17 index16 alt2">17</div><div class="line number18 index17 alt1">18</div><div class="line number19 index18 alt2">19</div><div class="line number20 index19 alt1">20</div><div class="line number21 index20 alt2">21</div></td><td class="code"><div class="container"><div class="line number1 index0 alt2"><code class="cpp plain">var data = null;</code></div><div class="line number2 index1 alt1">&nbsp;</div><div class="line number3 index2 alt2"><code class="cpp keyword bold">try</code> <code class="cpp plain">{</code></div><div class="line number4 index3 alt1">&nbsp;</div><div class="line number5 index4 alt2"><code class="cpp plain">data = getDataFromCache（）</code></div><div class="line number6 index5 alt1">&nbsp;</div><div class="line number7 index6 alt2"><code class="cpp plain">} </code><code class="cpp keyword bold">catch</code> <code class="cpp plain">(CacheException e) {</code></div><div class="line number8 index7 alt1">&nbsp;</div><div class="line number9 index8 alt2"><code class="cpp plain">data = getDataFromDB（） ？ </code><code class="cpp comments">// 1 异常时使用数据库继续支撑服务</code></div><div class="line number10 index9 alt1">&nbsp;</div><div class="line number11 index10 alt2"><code class="cpp plain">data = null ？ </code><code class="cpp comments">// 2 异常时，直接放弃该数据</code></div><div class="line number12 index11 alt1">&nbsp;</div><div class="line number13 index12 alt2"><code class="cpp plain">}</code></div><div class="line number14 index13 alt1">&nbsp;</div><div class="line number15 index14 alt2"><code class="cpp keyword bold">if</code> <code class="cpp plain">（data == null） {</code></div><div class="line number16 index15 alt1">&nbsp;</div><div class="line number17 index16 alt2"><code class="cpp plain">data = getDataFromDB（）</code></div><div class="line number18 index17 alt1">&nbsp;</div><div class="line number19 index18 alt2"><code class="cpp plain">putDataToCache（data, expiredTime）</code></div><div class="line number20 index19 alt1">&nbsp;</div><div class="line number21 index20 alt2"><code class="cpp plain">}</code></div></div></td></tr></tbody></table></div></div>
+<p>首先从缓存中取出数据，如果数据不存在，就从数据库中取出数据，放回缓存中，注意这里要设置一个缓存的过期时间，这样后面就可以动态的更新缓存了。正常的情况下，这样使用无可非议，但是如果缓存出现了异常，见上面的catch块。这一经典的使用方法引发了一个讨论，如果缓存异常了，我们应不应该用数据库去支撑服务？ 这里有两种说法：</p>
+<p>第一种：如果缓存异常应该访问数据库，当缓存异常时，用数据库继续完成服务支撑可以确保对外的7*24小时不间断服务，如果缓存异常系统的服务就不能提供，这就不能满足7*24小时不间断服务的承诺，况且缓存失效的时刻，不一定是高流量的时间段。数据库可能完全可以顶住压力，完成服务支撑，因此，当缓存异常时，应该使用数据库提供服务。</p>
+<p>第二种： 之所以增加缓存，就是因为数据库无法支撑系统的服务能力，如果缓存异常，大量请求压到数据库层面，势必在很短的时间内，服务依然会不可用，因此，当缓存异常时，应该直接返回一个默认值，停止对数据库的查询。</p>
+<p>这两种说法哪种正确？我认为都正确，因为对于不同的业务场景，缓存的使用策略也不同。当系统面临缓存异常的危险时，有些系统可以采用备份方案继续支撑服务。有些系统则会优雅降级，将某些依赖缓存的功能直接去除，保证主服务的正确性。所以这两种策略的选择需要根据实际的业务场景考虑并实施。还有一种缓存没有异常的风险，就是缓存数据的失效过快或者缓存数据更新过快，这样每次从缓存获取数据都是不存在的，缓存命中率极低，当命中率为0%时，称为缓存穿透，所有请求直接穿过缓存层调用下一层的服务，导致缓存的存在形同虚设，完全没有起到作用。因此，有效的监控缓存命中率是减小缓存穿透风险的好方法。</p>
+<h1>分布式缓存计数器</h1>
+<p>分布式缓存的另一个应用场景是缓存计数器。对于多服务器的系统，分布式缓存提供了统一的存储和原子操作，便于集群环境下的使用。库存计数器是分布式缓存的一个典型应用场景， 对于集群中的每一台机器，库存都应该是一个统一的值，因此使用本地缓存记录库存，数据肯定是不准确的（下面会陈述例外情况）。因此，统一的存储空间是必要的条件。由于库存数据被多台机器共享，因此，必须使用锁机制控制多个请求的并行并发问题。基于这样的机制就可以实行库存技术器的作用，防止货物超卖。最近的集分商城超值兑换就是使用的这种机制。基于这种机制，需要注意操作的逻辑顺序，错误的顺序会导致错的意想不到的结果。兑换的业务流程描述为用户看到要抢兑的商品，如果库存大于0，那么用户可以点击抢兑操作，这时用户会获得兑换该商品的权限，从而优惠购买，这时库存商品应该减一。如果完全按照业务流程，就会在实现中完成下面的三步操作：</p>
+<ul>
+<li>验证库存是否大于0</li>
+<li>给用户打标，使其获得优惠购买资格</li>
+<li>获得资格后，原子减库存，记录用户购买记录。</li>
+</ul>
+<p>看起来这样的逻辑是非常正常的，但是考虑一下异常情况，就会发现这样的逻辑无法防住超卖。如果库存只有一件，那么多个用户并发验证库存时，都大于0。这样并发的多个用户都会获得资格，超卖发生。</p>
+<p>正确的逻辑为：</p>
+<ul>
+<li>验证库存是否大于0，小于0直接返回。</li>
+<li>原子减库存，返回的结果如果 小于0说明已经没有库存，直接返回。</li>
+<li>如果返回的当前库存大于等于0，为用户打标，如果打标成功， 记录用户购买记录；如果打标失败，回补原子库存。</li>
+</ul>
+<p>这样的方法，无法保证缓存中的值一定大于等于0，因为并发的发生会把缓存减为负数，但是，真正能够优惠购买的用户一定是小于等于库存数的。因为，每次原子减操作后，只有返回的库存值大于等于零的用户才能够获得购买资格。无论并发量有多大，原子操作都会成功的防止超卖的发生。</p>
+<p>对于上述的逻辑，可以应对绝大多数的情况。但是随着量的增加，这种方式也有风险。当用户量极大，货物的库存极少时，就变成了秒杀。这个时候，大量的用户涌入分不是缓存减库存，对分布式缓存有极大冲击，一旦分布式缓存挂掉，秒杀活动也就宣告失败。使用分布式缓存，目的是为了让用户准确的看到剩余库存数目，秒杀活动非常快，用户还没有看清楚库存，活动就结束了。其实用户关心的只是有没有抢到商品，并不关心库存的剩余数量，因此，库存是减的准不准确并不是主要的问题，这时就可以放弃分布式缓存的设计，转而使用本地缓存存储库存数，这也就是本地缓存使用的第二个场景。（见分布式环境下的本地缓存，第二个场景），比如，一共有10个商品，2台机器，可以设置每台机器的本地内存中库存等于10，那么对于外网的千万个用户，就可以有20个人抢到商品，剩下的人都被挡在库存之外，当这20个人抢到后，就可以实现另一个处理逻辑，从20个人中选出10个真正中标的人，获得10个商品的购买权限，这个选择的逻辑非常灵活，可随意定制。但是从20选10的操作，无论如何也比从千千万万个人中选10要好的多。这样可以确保秒杀的安全完成。如果秒杀的人继续增多，那么也可以通过客户端（即javascript）设置格挡率的方法，使少量的用户可以发出请求到服务器，绝大多数的用户都被挡在浏览器上。如果有人使用秒杀器，那么可以通过监控封锁IP等方式拒绝其访问，天猫的抢红包活动应该有类似的逻辑。</p>
+<h1>总结</h1>
+<p>缓存无处不在, 目前的总结的使用场景还相差的很远（本次总结暂定为上集，后面的一些其他使用场景将在下集中继续总结）。缓存的使用是一门艺术，易于上手，难于精通。灵活的使用缓存是进阶高级程序员的必经之路，有经验的程序员可以根据不同的业务场景给出合适的缓存策略，实现不同的需求。后面在新的项目实践中，我仍需不断学习，将灵活使用缓存的能力不断提高。</p>
+<h1>参考资料</h1>
+<p>《高扩展性网站的50条原则》</p>
+<p>《构建高性能web站点》</p>
+<p><a href="http://robbinfan.com/blog/38/orm-cache-sumup">《Web应用的缓存设计模式》</a></p>
+<p><a href="http://www.cnblogs.com/myjavawork/articles/2006059.html">《mysql的查询缓存》</a></p>
+<p><a href="http://blog.chinaunix.net/uid-17282739-id-3201157.html">《mysql性能优化》</a></p>
+<p><a href="http://blog.chinaunix.net/uid-17282739-id-3201157.html"></a></p>
+			</div>
+			
+			<p class="postinfo clear">
+				<span class="category">Filed under - <a href="http://www.searchtb.com/category/optimization" title="查看性能优化中的全部文章" rel="category tag">性能优化</a></span> 
+				<span class="comment"><a href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html#comments" title="《关于缓存（上）》上的评论">12 Comments</a> so far.</span><br>
+			</p>
+			<p class="tag"> </p>
+			<p></p>
+		</div>
+
+	
+		<div class="related">
+	<h3>相关文章</h3>
+	<ul>
+		<li><a href="http://www.searchtb.com/2010/12/array-loop-optimization.html" rel="bookmark" title="Permanent Link: 数组的优化循环展开与分割">数组的优化循环展开与分割</a></li><li><a href="http://www.searchtb.com/2012/09/dump-plugin.html" rel="bookmark" title="Permanent Link: Dump Plugin并行化实践">Dump Plugin并行化实践</a></li><li><a href="http://www.searchtb.com/2013/06/consensus-made-simple-2.html" rel="bookmark" title="Permanent Link: consensus made simple">consensus made simple</a></li><li><a href="http://www.searchtb.com/2013/06/have_fun_of_mmap.html" rel="bookmark" title="Permanent Link: 玩转mmap">玩转mmap</a></li> 
+        </ul>
+ 	
+ <br class="clear">
+</div>
+
+<!-- You can start editing here. -->
+<div id="comments">
+	<h2 class="mainhead">12 Responses</h2>
+
+	<span class="fleft"></span> <span class="fright"></span>
+	<br class="clear">
+
+	<ol class="commentlist">
+			<li class="comment even thread-even depth-1" id="li-comment-15957">
+		<div id="comment-15957">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/7abe97d8497392a74f7802271d574b1b" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://hi.baidu.com/bikong0411" rel="external nofollow" class="url">sky™</a> on 25 四 2013</div>			
+								<p>写的很好，期待下篇</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=15957#respond" onclick="return addComment.moveForm(&quot;comment-15957&quot;, &quot;15957&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-16168">
+		<div id="comment-16168">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="http://0.gravatar.com/avatar/8cb6d0990710bdde3f09b952283768cf?s=60&d=http%3A%2F%2F0.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&r=G" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://www.haomingyan.com/" rel="external nofollow" class="url">名人名言</a> on 28 四 2013</div>			
+								<p>学习了··谢谢你</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=16168#respond" onclick="return addComment.moveForm(&quot;comment-16168&quot;, &quot;16168&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	<li class="comment even thread-even depth-1" id="li-comment-19069">
+		<div id="comment-19069">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="http://0.gravatar.com/avatar/cb218158d0937427fb5c26e0d954907a?s=60&d=http%3A%2F%2F0.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&r=G" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info">Zzz on 21 六 2013</div>			
+								<p>“有些对数据实时性，准确性要求极高的系统，不能使用缓存”<br>
+为什么这么说呢？？？？<br>
+对于数据实时性 ，准确性要求极高且反问量比较大的系统该如何？？</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=19069#respond" onclick="return addComment.moveForm(&quot;comment-19069&quot;, &quot;19069&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+<ul class="children">
+	<li class="comment odd alt depth-2" id="li-comment-19257">
+		<div id="comment-19257">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/38823f02b2673eff3d755d5dfe4e041c" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info">了然 on 24 六 2013</div>			
+								<p>数据实时性，准确性要求极高的系统 ， 举个例子的话，就想到了银行的存取款系统，这系统如果使用读缓存， 用户会疯掉。 因为钱转过来了却需要一段时间以后看到，如果使用写缓存，银行会疯掉，因为多存储的不一致性会让很多数据丢失。所以对于实时性准确性要求极高的系统，无论访问量多大，最多采用排队的异步方式，而不能使用缓存提高效率。</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=19257#respond" onclick="return addComment.moveForm(&quot;comment-19257&quot;, &quot;19257&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+<ul class="children">
+	<li class="comment even depth-3" id="li-comment-29314">
+		<div id="comment-29314">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="http://0.gravatar.com/avatar/0af46e7838cb5c6bed0d132b865d6ead?s=60&d=http%3A%2F%2F0.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&r=G" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="https://github.com/EdwardLee03" rel="external nofollow" class="url">lihg</a> on 24 十二 2013</div>			
+								<p>赞同 “多存储的不一致性”，尤其对于银行系统是绝对不能接受的。</p>
+<p>“如果使用读缓存， 用户会疯掉。 因为钱转过来了却需要一段时间以后看到”，对于这句话，有个前提是“读写分离”。<br>
+如果对于互为主备架构，读写都首先访问主（Master）呢？</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=29314#respond" onclick="return addComment.moveForm(&quot;comment-29314&quot;, &quot;29314&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+</ul><!-- .children -->
+</li><!-- #comment-## -->
+	<li class="comment odd alt depth-2" id="li-comment-19315">
+		<div id="comment-19315">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/bfb348d4467f4ca57ee09c4d3ba10675" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://ssss/" rel="external nofollow" class="url">discus</a> on 25 六 2013</div>			
+								<p>实时性,说明数据在很短的时间内采集.数据的频度很高,所有如果用缓存就和上面说的冲突了,取上来的数据直接用就行了,通过另外的管道做好备份.</p>
+<p>对于数据实时性 ，准确性要求极高且反问量比较大的系统:<br>
+  1,架构时,一定要模块化,模块之间分散处理.<br>
+  2,模块之间尽量做到低耦合.<br>
+  3,日志一定要完备,做到每一步都有相应日志,出问题你也好分析不是.<br>
+  4. 尽量少的依赖于数据库,利用缓存批次更新数据库.或单独更新数据库.<br>
+  5. 各组件一定要稳定,可靠,不然,查问题就忙死了.<br>
+一点见意,仅供参考</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=19315#respond" onclick="return addComment.moveForm(&quot;comment-19315&quot;, &quot;19315&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+</ul><!-- .children -->
+</li><!-- #comment-## -->
+	<li class="comment even thread-odd thread-alt depth-1" id="li-comment-22424">
+		<div id="comment-22424">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/dcfe3eb05f1838031feb68762be67465" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://xn--9kr22gnbw3z/" rel="external nofollow" class="url">于</a> on 26 八 2013</div>			
+								<p>缓存写操作<br>
+      访问帖子的时候，是不是一个人来访问一次，就应该在缓存中+1，然后判断它的数量级是多少，看看需不需要入库？</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=22424#respond" onclick="return addComment.moveForm(&quot;comment-22424&quot;, &quot;22424&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	<li class="comment odd alt thread-even depth-1" id="li-comment-22425">
+		<div id="comment-22425">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/dcfe3eb05f1838031feb68762be67465" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://xn--9kr22gnbw3z/" rel="external nofollow" class="url">于</a> on 26 八 2013</div>			
+								<p>接上文，<br>
+      而且在缓存中+1的这个操作应该是线程安全的？</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=22425#respond" onclick="return addComment.moveForm(&quot;comment-22425&quot;, &quot;22425&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	<li class="comment even thread-odd thread-alt depth-1" id="li-comment-22426">
+		<div id="comment-22426">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/dcfe3eb05f1838031feb68762be67465" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://xn--9kr22gnbw3z/" rel="external nofollow" class="url">于</a> on 26 八 2013</div>			
+								<p>数据库缓存<br>
+      select执行后，记过会存入缓存，但是执行DML语句后缓存就会失效，这个是指对同一个表进行的DML操作还是任意一个表进行DML操作？</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=22426#respond" onclick="return addComment.moveForm(&quot;comment-22426&quot;, &quot;22426&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	<li class="comment odd alt thread-even depth-1" id="li-comment-22427">
+		<div id="comment-22427">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/dcfe3eb05f1838031feb68762be67465" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://xn--9kr22gnbw3z/" rel="external nofollow" class="url">于</a> on 26 八 2013</div>			
+								<p>在分布式缓存中有这样一句话“注意这里要设置一个缓存的过期时间”，我没太明白，为什么要设置缓存过期时间，过期时间到了缓存不就作废了么，又得从新往里放数据？</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=22427#respond" onclick="return addComment.moveForm(&quot;comment-22427&quot;, &quot;22427&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	<li class="comment even thread-odd thread-alt depth-1" id="li-comment-22431">
+		<div id="comment-22431">
+		  
+			<div class="comment-author fleft">
+				<img alt="" src="./关于缓存（上） « 搜索技术博客－淘宝_files/dcfe3eb05f1838031feb68762be67465" class="avatar avatar-60 photo" height="60" width="60"> 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://xn--9kr22gnbw3z/" rel="external nofollow" class="url">于</a> on 26 八 2013</div>			
+								<p>淘宝的服务器这么多，那它是怎么保证我更新商品价格之后，每台服务器都缓存都跟着更新的呢？这个问题您的文章没有涉及，忘求解。</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=22431#respond" onclick="return addComment.moveForm(&quot;comment-22431&quot;, &quot;22431&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	<li class="pingback odd alt thread-even depth-1" id="li-comment-25357">
+		<div id="comment-25357">
+		  
+			<div class="comment-author fleft">
+				 
+			</div>
+			  
+			<div class="comment-info fright">
+				<div class="c_info"><a href="http://www.chawenti.com/articles/20577.html" rel="external nofollow" class="url">Web开发基本准则-55实录-缓存策略 – 旁观者 | 查问题</a> on 27 十 2013</div>			
+								<p>[...] 当系统面临缓存异常的危险时，有些系统可以采用备份方案继续支撑服务。有些系统则会优雅降级，将某些依赖缓存的功能直接去除，保证主服务的正确性。所以这两种策略的选择需要根据实际的业务场景考虑并实施。（出处）    &nbsp;  2.5.分级缓存 &nbsp; 有些业务场景里，应该把 DB 当成仅是一个存储而已，靠分级缓存策略来层层抵挡缓存失效，不让请求打到 DB。 [...]</p>
+								<div class="reply fleft">
+					<a class="comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html?replytocom=25357#respond" onclick="return addComment.moveForm(&quot;comment-25357&quot;, &quot;25357&quot;, &quot;respond&quot;, &quot;3192&quot;)">回复</a>				</div>
+			</div>
+			<div class="clear"></div>
+		</div>
+	 
+</li><!-- #comment-## -->
+	</ol>
+
+	<span class="fleft"></span> <span class="fright"></span>
+	<br class="clear">
+
+
+
+
+	<div id="respond">
+		<h2 class="mainhead">留言</h2>		
+		<div class="cancel-comment-reply"> <a rel="nofollow" id="cancel-comment-reply-link" href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html#respond" style="display:none;">Cancel</a> </div>
+
+		<div class="res_1 fleft">
+		
+					<form action="http://www.searchtb.com/wp-comments-post.php" method="post" id="commentform">
+							
+				<p><label for="author">Name (required)</label><input type="text" title="名字" name="author" id="author" value="" size="22" tabindex="1" aria-required="true" class="tagged"></p>
+				<p><label for="email">Email (required)</label><input type="text" title="邮件地址" name="email" id="email" value="" size="22" tabindex="2" aria-required="true" class="tagged"></p>
+				<p><label for="url">URL</label><input type="text" title="博客地址" name="url" id="url" value="" size="22" tabindex="3" class="tagged"></p>
+				<p><input name="submit" type="submit" id="submit" tabindex="5" value="提交"><input type="hidden" name="comment_post_ID" value="3192" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+</p>
+					</form></div>			
+			<div class="res_2 fright">
+				<p><label for="commentt">Comment</label><textarea class="fright tagged" name="comment" title="留言" id="comment" cols="100%" rows="10" tabindex="4"></textarea></p>
+				
+				<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="dd8d75ba94"></p>			</div>
+			<div class="clear"></div>	
+			
+	</div>
+</div>
+
+</div>
+<div id="sidebar" class="sidecontainer fright">
+
+	<div class="widgets">
+		<h2 class="mainhead">订阅</h2>
+		<p class="feed"><a href="http://www.searchtb.com/feed">Subscribe to feed <br><span>get the latest updates!</span></a></p>
+		<form method="get" id="ksearchform" action="http://www.searchtb.com/">
+			<div>
+				<input type="text" size="18" value="" name="s" id="s">
+				<input type="submit" id="ksearchsubmit" value="搜索" class="btn">
+			</div>
+			<br class="clear">
+		</form>
+	</div>
+
+	<ul>
+				<li class="widgets">		<h2 class="mainhead">最近更新</h2>		<ul>
+					<li>
+				<a href="http://www.searchtb.com/2015/01/index-layering.html" title="从未降级的搜索-主搜索分层优化">从未降级的搜索-主搜索分层优化</a>
+						</li>
+					<li>
+				<a href="http://www.searchtb.com/2014/12/%e4%bb%8e%e6%9c%aa%e9%99%8d%e7%ba%a7%e7%9a%84%e6%90%9c%e7%b4%a2%e6%8a%80%e6%9c%af-%e5%ae%9e%e6%97%b6%e4%b9%8b%e5%88%83.html" title="从未降级的搜索技术-实时之刃">从未降级的搜索技术-实时之刃</a>
+						</li>
+					<li>
+				<a href="http://www.searchtb.com/2014/11/%e4%bb%8e%e6%9c%aa%e9%99%8d%e7%ba%a7%e7%9a%84%e6%90%9c%e7%b4%a2%e6%8a%80%e6%9c%af-hippo%e5%9c%a8%e7%ba%bf%e6%9c%8d%e5%8a%a1%e8%b0%83%e5%ba%a6%e7%b3%bb%e7%bb%9f.html" title="从未降级的搜索技术-Hippo在线服务调度系统">从未降级的搜索技术-Hippo在线服务调度系统</a>
+						</li>
+					<li>
+				<a href="http://www.searchtb.com/2014/11/search-in-1111-hbase.html" title="从未降级的搜索技术 – HBase集群升级与优化">从未降级的搜索技术 – HBase集群升级与优化</a>
+						</li>
+					<li>
+				<a href="http://www.searchtb.com/2014/11/%e8%81%8a%e8%81%8a%e5%a4%9a%e7%ba%bf%e7%a8%8b%e7%a8%8b%e5%ba%8f%e7%9a%84load-balance.html" title="聊聊多线程程序的load balance">聊聊多线程程序的load balance</a>
+						</li>
+					<li>
+				<a href="http://www.searchtb.com/2014/11/%e4%bb%8e%e6%9c%aa%e9%99%8d%e7%ba%a7%e7%9a%84%e6%90%9c%e7%b4%a2%e6%8a%80%e6%9c%af-%e5%a4%a9%e7%8c%absku%e6%90%9c%e7%b4%a2.html" title="从未降级的搜索技术-天猫SKU搜索">从未降级的搜索技术-天猫SKU搜索</a>
+						</li>
+					<li>
+				<a href="http://www.searchtb.com/2014/11/search-in-1111.html" title="从未降级的搜索技术">从未降级的搜索技术</a>
+						</li>
+					<li>
+				<a href="http://www.searchtb.com/2014/09/4store%e6%ba%90%e7%a0%81%e8%a7%a3%e6%9e%90%e7%b3%bb%e5%88%978-%e6%9f%a5%e8%af%a2%e7%bb%93%e6%9e%9c%e7%9a%84%e5%a4%84%e7%90%86.html" title="4store源码解析系列(8)–查询结果的处理">4store源码解析系列(8)–查询结果的处理</a>
+						</li>
+				</ul>
+		</li><li class="widgets"><h2 class="mainhead">标签云</h2><div class="tagcloud"><a href="http://www.searchtb.com/tag/ab-test" class="tag-link-30" title="2个话题" style="font-size: 10.863636363636pt;">A/B Test</a>
+<a href="http://www.searchtb.com/tag/bts" class="tag-link-46" title="1个话题" style="font-size: 8pt;">BTS</a>
+<a href="http://www.searchtb.com/tag/c" class="tag-link-80" title="3个话题" style="font-size: 12.772727272727pt;">c++</a>
+<a href="http://www.searchtb.com/tag/cassandra" class="tag-link-20" title="1个话题" style="font-size: 8pt;">Cassandra</a>
+<a href="http://www.searchtb.com/tag/checkstyle" class="tag-link-42" title="1个话题" style="font-size: 8pt;">checkstyle</a>
+<a href="http://www.searchtb.com/tag/cppunit" class="tag-link-32" title="1个话题" style="font-size: 8pt;">CppUnit</a>
+<a href="http://www.searchtb.com/tag/google" class="tag-link-17" title="2个话题" style="font-size: 10.863636363636pt;">Google</a>
+<a href="http://www.searchtb.com/tag/gpu" class="tag-link-26" title="1个话题" style="font-size: 8pt;">GPU</a>
+<a href="http://www.searchtb.com/tag/graph-database" class="tag-link-152" title="8个话题" style="font-size: 18.340909090909pt;">graph database</a>
+<a href="http://www.searchtb.com/tag/hadoop" class="tag-link-14" title="14个话题" style="font-size: 22pt;">Hadoop</a>
+<a href="http://www.searchtb.com/tag/hbase" class="tag-link-69" title="8个话题" style="font-size: 18.340909090909pt;">hbase</a>
+<a href="http://www.searchtb.com/tag/java" class="tag-link-41" title="2个话题" style="font-size: 10.863636363636pt;">java</a>
+<a href="http://www.searchtb.com/tag/jni" class="tag-link-37" title="1个话题" style="font-size: 8pt;">JNI</a>
+<a href="http://www.searchtb.com/tag/junit" class="tag-link-33" title="1个话题" style="font-size: 8pt;">JUnit</a>
+<a href="http://www.searchtb.com/tag/leslie-lamport" class="tag-link-50" title="1个话题" style="font-size: 8pt;">Leslie Lamport</a>
+<a href="http://www.searchtb.com/tag/linux" class="tag-link-28" title="12个话题" style="font-size: 20.886363636364pt;">Linux</a>
+<a href="http://www.searchtb.com/tag/mangodb" class="tag-link-35" title="1个话题" style="font-size: 8pt;">mangodb</a>
+<a href="http://www.searchtb.com/tag/mapreduce" class="tag-link-15" title="1个话题" style="font-size: 8pt;">MapReduce</a>
+<a href="http://www.searchtb.com/tag/multivariate-test" class="tag-link-47" title="1个话题" style="font-size: 8pt;">Multivariate Test</a>
+<a href="http://www.searchtb.com/tag/mysql" class="tag-link-13" title="2个话题" style="font-size: 10.863636363636pt;">MySQL</a>
+<a href="http://www.searchtb.com/tag/neo4j" class="tag-link-153" title="8个话题" style="font-size: 18.340909090909pt;">neo4j</a>
+<a href="http://www.searchtb.com/tag/nginx" class="tag-link-73" title="3个话题" style="font-size: 12.772727272727pt;">nginx</a>
+<a href="http://www.searchtb.com/tag/nosql" class="tag-link-21" title="4个话题" style="font-size: 14.363636363636pt;">NoSQL</a>
+<a href="http://www.searchtb.com/tag/paxos" class="tag-link-125" title="2个话题" style="font-size: 10.863636363636pt;">paxos</a>
+<a href="http://www.searchtb.com/tag/php" class="tag-link-22" title="8个话题" style="font-size: 18.340909090909pt;">PHP</a>
+<a href="http://www.searchtb.com/tag/protocol-buffers" class="tag-link-16" title="3个话题" style="font-size: 12.772727272727pt;">Protocol Buffers</a>
+<a href="http://www.searchtb.com/tag/redis" class="tag-link-54" title="2个话题" style="font-size: 10.863636363636pt;">redis</a>
+<a href="http://www.searchtb.com/tag/samba" class="tag-link-34" title="1个话题" style="font-size: 8pt;">Samba</a>
+<a href="http://www.searchtb.com/tag/scrapy" class="tag-link-39" title="2个话题" style="font-size: 10.863636363636pt;">Scrapy</a>
+<a href="http://www.searchtb.com/tag/streaming" class="tag-link-29" title="2个话题" style="font-size: 10.863636363636pt;">Streaming</a>
+<a href="http://www.searchtb.com/tag/zookeeper" class="tag-link-48" title="2个话题" style="font-size: 10.863636363636pt;">zookeeper</a>
+<a href="http://www.searchtb.com/tag/%e4%b8%80%e6%b7%98" class="tag-link-19" title="5个话题" style="font-size: 15.636363636364pt;">一淘</a>
+<a href="http://www.searchtb.com/tag/%e5%88%86%e5%b8%83%e5%bc%8f%e6%8a%93%e5%8f%96" class="tag-link-40" title="2个话题" style="font-size: 10.863636363636pt;">分布式抓取</a>
+<a href="http://www.searchtb.com/tag/%e5%88%86%e5%b8%83%e5%bc%8f%e9%94%81" class="tag-link-51" title="1个话题" style="font-size: 8pt;">分布式锁</a>
+<a href="http://www.searchtb.com/tag/%e5%89%8d%e7%ab%af" class="tag-link-23" title="2个话题" style="font-size: 10.863636363636pt;">前端</a>
+<a href="http://www.searchtb.com/tag/%e5%8d%95%e5%85%83%e6%b5%8b%e8%af%95" class="tag-link-31" title="1个话题" style="font-size: 8pt;">单元测试</a>
+<a href="http://www.searchtb.com/tag/%e5%af%bc%e8%b4%ad%e6%90%9c%e7%b4%a2" class="tag-link-10" title="1个话题" style="font-size: 8pt;">导购搜索</a>
+<a href="http://www.searchtb.com/tag/%e6%80%a7%e8%83%bd" class="tag-link-24" title="1个话题" style="font-size: 8pt;">性能</a>
+<a href="http://www.searchtb.com/tag/%e6%80%a7%e8%83%bd%e4%bc%98%e5%8c%96" class="tag-link-118" title="5个话题" style="font-size: 15.636363636364pt;">性能优化</a>
+<a href="http://www.searchtb.com/tag/%e6%90%9c%e7%b4%a2%e4%ba%a7%e5%93%81%e4%bc%98%e5%8c%96" class="tag-link-45" title="1个话题" style="font-size: 8pt;">搜索产品优化</a>
+<a href="http://www.searchtb.com/tag/%e6%90%9c%e7%b4%a2%e5%bc%95%e6%93%8e" class="tag-link-7" title="4个话题" style="font-size: 14.363636363636pt;">搜索引擎</a>
+<a href="http://www.searchtb.com/tag/%e7%ae%97%e6%b3%95" class="tag-link-25" title="3个话题" style="font-size: 12.772727272727pt;">算法</a>
+<a href="http://www.searchtb.com/tag/%e7%bd%91%e7%bb%9c%e7%88%ac%e8%99%ab" class="tag-link-38" title="2个话题" style="font-size: 10.863636363636pt;">网络爬虫</a>
+<a href="http://www.searchtb.com/tag/%e8%a3%85%e8%bd%bd" class="tag-link-82" title="2个话题" style="font-size: 10.863636363636pt;">装载</a>
+<a href="http://www.searchtb.com/tag/%e9%93%be%e6%8e%a5" class="tag-link-81" title="2个话题" style="font-size: 10.863636363636pt;">链接</a></div>
+</li><li class="widgets"><h2 class="mainhead">近期评论</h2><ul id="recentcomments"><li class="recentcomments">walllwind发表在《<a href="http://www.searchtb.com/2012/10/introduction_to_disruptor.html#comment-140207">一种高效无锁内存队列的实现</a>》</li><li class="recentcomments"><a href="http://iat.net.cn/" rel="external nofollow" class="url">iat.net.cn</a>发表在《<a href="http://www.searchtb.com/2010/12/php-opcode-cache.html#comment-139056">前端开发中的性能那点事（三）php的opcode缓存</a>》</li><li class="recentcomments"><a href="http://www.aseaa.com/" rel="external nofollow" class="url">小莉爱美</a>发表在《<a href="http://www.searchtb.com/2014/12/%e4%bb%8e%e6%9c%aa%e9%99%8d%e7%ba%a7%e7%9a%84%e6%90%9c%e7%b4%a2%e6%8a%80%e6%9c%af-%e5%ae%9e%e6%97%b6%e4%b9%8b%e5%88%83.html#comment-137865">从未降级的搜索技术-实时之刃</a>》</li><li class="recentcomments"><a href="http://baike.renwuyi.com/" rel="external nofollow" class="url">威客百科</a>发表在《<a href="http://www.searchtb.com/2014/12/%e4%bb%8e%e6%9c%aa%e9%99%8d%e7%ba%a7%e7%9a%84%e6%90%9c%e7%b4%a2%e6%8a%80%e6%9c%af-%e5%ae%9e%e6%97%b6%e4%b9%8b%e5%88%83.html#comment-136689">从未降级的搜索技术-实时之刃</a>》</li><li class="recentcomments"><a href="http://xn--9kr22gnbw3z/" rel="external nofollow" class="url">chance</a>发表在《<a href="http://www.searchtb.com/2013/06/have_fun_of_mmap.html#comment-132583">玩转mmap</a>》</li><li class="recentcomments"><a href="http://yangmitaobao.com/" rel="external nofollow" class="url">沐鑫</a>发表在《<a href="http://www.searchtb.com/2014/11/%e4%bb%8e%e6%9c%aa%e9%99%8d%e7%ba%a7%e7%9a%84%e6%90%9c%e7%b4%a2%e6%8a%80%e6%9c%af-hippo%e5%9c%a8%e7%ba%bf%e6%9c%8d%e5%8a%a1%e8%b0%83%e5%ba%a6%e7%b3%bb%e7%bb%9f.html#comment-132044">从未降级的搜索技术-Hippo在线服务调度系统</a>》</li><li class="recentcomments">streaming发表在《<a href="http://www.searchtb.com/2012/09/introduction-to-storm.html#comment-130048">storm简介</a>》</li><li class="recentcomments">桂南发表在《<a href="http://www.searchtb.com/2014/12/%e4%bb%8e%e6%9c%aa%e9%99%8d%e7%ba%a7%e7%9a%84%e6%90%9c%e7%b4%a2%e6%8a%80%e6%9c%af-%e5%ae%9e%e6%97%b6%e4%b9%8b%e5%88%83.html#comment-130023">从未降级的搜索技术-实时之刃</a>》</li></ul></li><li class="widgets"><h2 class="mainhead">友情链接</h2>
+	<ul class="xoxo blogroll">
+<li><a href="http://www.taobaodba.com/" target="_blank">淘宝DBA团队</a></li>
+<li><a href="http://ued.taobao.com/blog/" target="_blank">淘宝UED团队</a></li>
+<li><a href="http://job.taobao.com/" target="_blank">淘宝招聘</a></li>
+<li><a href="http://www.tbdata.org/" target="_blank">淘宝数据平台团队</a></li>
+<li><a href="http://rdc.taobao.com/blog/cs/" target="_blank">淘宝核心系统团队</a></li>
+<li><a href="http://rdc.taobao.com/blog/qa/" target="_blank">淘宝质量保障团队</a></li>
+<li><a href="http://www.linezing.com/blog/" title="量子统计官方博客" target="_blank">量子统计官方博客</a></li>
+
+	</ul>
+</li>
+<li class="widgets"><h2 class="mainhead">功能</h2>			<ul>
+			<li><a href="http://www.searchtb.com/wp-login.php?action=register">注册</a></li>			<li><a href="http://www.searchtb.com/wp-login.php">登录</a></li>
+			<li><a href="http://www.searchtb.com/feed" title="使用RSS 2.0订阅本站点内容">文章<abbr title="Really Simple Syndication">RSS</abbr></a></li>
+			<li><a href="http://www.searchtb.com/comments/feed" title="使用RSS订阅本站点的所有文章的近期评论">评论<abbr title="Really Simple Syndication">RSS</abbr></a></li>
+									</ul>
+</li>	</ul>
+		
+</div><!--end of #sidebar -->
+	<br class="clear">
+	</div><!-- end of #wrapper -->
+
+	<div id="footer">
+		<div class="container">
+			<div class="ftext fleft">
+				搜索技术博客－淘宝 © 2015. All rights reserved. 
+			</div>
+				
+			<div class="fcred fright">
+			 	<span class="fleft">A quality product by</span> <a href="http://www.kreativethemes.com/" class="fright" id="kreativethemes">KreativeThemes</a>
+			</div>
+		</div>
+		<div class="clear"></div>
+	</div>
+	
+	
+	
+		<script language="javascript" type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/tab.js"></script>
+	<script language="javascript" type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/jquery.fieldtag.min.js"></script>
+	
+	<script type="text/javascript">
+	<!--
+	jQuery(function($){
+	    //snip
+		$("#author,#url,#email,#comment").fieldtag();
+	    //snap
+	});
+	-->
+	</script>
+	<script type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/shCore.js"></script>
+<script type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/shBrushCpp.js"></script>
+<script type="text/javascript">
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "http://www.searchtb.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.83c";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "http://www.searchtb.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeDefault.css?ver=3.0.83c";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '帮助';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = '无法找到Brush：';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush不能设置 html-script选项';
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+</script>
+        <script type="text/javascript" src="./关于缓存（上） « 搜索技术博客－淘宝_files/tongji.js"></script><img src="./关于缓存（上） « 搜索技术博客－淘宝_files/tongji.do" border="0" width="1" height="1"><noscript>&lt;a href="http://www.linezing.com"&gt;&lt;img src="http://img.tongji.linezing.com/2033179/tongji.gif"/&gt;&lt;/a&gt;</noscript>
+        <script type="text/javascript">
+          var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-18547630-1']); _gaq.push(['_setDomainName', 'none']); _gaq.push(['_setAllowLinker', true]); _gaq.push(['_trackPageview']);
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+        </script>
+
+
+</body></html>

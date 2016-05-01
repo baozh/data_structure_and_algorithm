@@ -1,0 +1,90 @@
+* Books
+
+- The Architecture of Open Source Applications
+  http://aosabook.org/en/index.html
+
+－ Mining of Massive Datasets
+http://i.stanford.edu/~ullman/mmds.html
+
+- Big Data: Principles and best practices of scalable realtime data systems @Nathan Marz.
+http://www.manning.com/marz/
+
+- 分布式系统领域经典论文翻译集 
+http://duanple.blog.163.com/blog/static/709717672011330101333271/
+
+- 计算机，极客的英文文章翻译
+http://www.labazhou.net/
+
+- Algorithm design, system design
+http://www.hiredintech.com/app
+
+
+- Computer Systems, Distributed Algorithms and Databases
+ http://the-paper-trail.org/blog/
+
+
+* Blogs
+－ High Scalablity
+http://highscalability.com/
+
+- Storage and Distributed System
+http://dongfeiwww.com/system/2014/08/19/system/
+
+- Notes of system paper reading
+http://dongfeiwww.com/code/2014/09/28/paper/
+
+- Applied Research. Big Data. Distributed Systems. Open Source. 
+http://www.michael-noll.com/
+
+- Data Architecture Lessons from LinkedIn.com Data Handling Mechanisms
+http://vitalflux.com/data-handled-linkedin-com/
+
+- Distributed Algorithms in NoSQL Databases
+http://highlyscalable.wordpress.com/2012/09/18/distributed-algorithms-in-nosql-databases
+
+- OO Design 
+http://blog.csdn.net/longyulu/article/details/9159589
+
+- System Design
+http://myprogrammingpractices.blogspot.com/2015/06/software-engineer-interview-preparation.html
+
+* Tech Company Blogs
+
+- Twitter
+https://blog.twitter.com/engineering
+
+- Dropbox
+https://tech.dropbox.com/
+
+- Linkedin
+https://engineering.linkedin.com/blog
+
+- Box
+http://tech.blog.box.com/
+
+- Netflix
+http://techblog.netflix.com/
+
+- Airbnb
+http://nerds.airbnb.com/
+
+- Evernote
+http://blog.evernote.com/tech/
+
+- Hortonworks
+http://hortonworks.com/blog/
+
+- Databricks
+http://databricks.com/blog
+
+- Pinterest
+http://engineering.pinterest.com/
+
+Cloudera
+http://blog.cloudera.com/blog/
+
+- Coursera
+https://tech.coursera.org/
+
+- Qubole
+http://www.qubole.com/resources/

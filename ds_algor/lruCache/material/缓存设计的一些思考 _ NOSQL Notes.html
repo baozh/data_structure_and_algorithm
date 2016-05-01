@@ -1,0 +1,427 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0038)http://www.nosqlnotes.net/archives/222 -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head profile="http://gmpg.org/xfn/11"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+    <title>  缓存设计的一些思考 | NOSQL Notes</title>
+			<link rel="stylesheet" type="text/css" media="all" href="./缓存设计的一些思考 _ NOSQL Notes_files/style.css">
+	<link rel="pingback" href="http://www.nosqlnotes.net/xmlrpc.php">
+	<link rel="alternate" type="application/rss+xml" title="NOSQL Notes » Feed" href="http://www.nosqlnotes.net/feed">
+<link rel="alternate" type="application/rss+xml" title="NOSQL Notes » 评论Feed" href="http://www.nosqlnotes.net/comments/feed">
+<link rel="alternate" type="application/rss+xml" title="NOSQL Notes » 缓存设计的一些思考评论Feed" href="http://www.nosqlnotes.net/archives/222/feed">
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.nosqlnotes.net/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://www.nosqlnotes.net/wp-includes/wlwmanifest.xml"> 
+<link rel="prev" title="GDB的两个技巧" href="http://www.nosqlnotes.net/archives/183">
+<link rel="next" title="”云存储系统“赏析系列分享三：SQL与NOSQL" href="http://www.nosqlnotes.net/archives/226">
+<meta name="generator" content="WordPress 4.0.5">
+<link rel="canonical" href="./缓存设计的一些思考 _ NOSQL Notes_files/缓存设计的一些思考 _ NOSQL Notes.html">
+<link rel="shortlink" href="http://www.nosqlnotes.net/?p=222">
+<meta id="syntaxhighlighteranchor" name="syntaxhighlighter-version" content="3.1.2">
+</head>
+<body class="single single-post postid-222 single-format-standard">
+
+<div id="nav">
+	<div id="menus"><div class="menu"><ul><li><a href="http://www.nosqlnotes.net/">首页</a></li><li class="page_item page-item-2"><a href="http://www.nosqlnotes.net/%e5%85%b3%e4%ba%8e">关于作者</a></li></ul></div>
+</div>
+	<div id="search">
+		<form id="searchform" method="get" action="http://www.nosqlnotes.net/">
+<input type="text" value="Search: type, hit enter" onfocus="if (this.value == &#39;Search: type, hit enter&#39;) {this.value = &#39;&#39;;}" onblur="if (this.value == &#39;&#39;) {this.value = &#39;Search: type, hit enter&#39;;}" size="35" maxlength="50" name="s" id="s">
+<input type="submit" id="searchsubmit" value="">
+</form>	</div>
+</div>
+<div id="wrapper">
+	<div id="header">
+		<h1><a href="http://www.nosqlnotes.net/">NOSQL Notes</a></h1>
+		<h2>专注于分布式存储&amp;计算技术及其应用</h2>
+		<div class="clear"></div>
+		<div id="rss"><a href="http://www.nosqlnotes.net/feed" rel="nofollow" title="RSS Feed">RSS Feed</a></div>
+					</div>
+<hr>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="content">
+		<div class="post-222 post type-post status-publish format-standard hentry category-6 tag-lirscache post-single" id="post-222"><!-- post div -->
+		<h2 class="title title-single">缓存设计的一些思考</h2>
+		<div class="post-info-top">
+			<span class="post-info-date">Posted by chuanhui on 2011 年 06 月 19 日 </span>
+			<span id="addcomment"><a href="http://www.nosqlnotes.net/archives/222#respond" rel="nofollow" title="Leave a comment ?">Leave a comment</a> (9)</span>
+			<span id="gotocomments"><a href="http://www.nosqlnotes.net/archives/222#comments" rel="nofollow" title="Go to comments ?">Go to comments</a></span>
+		</div>
+		<div class="fixed"></div>
+		<div class="entry">
+			<p>互联网架构中缓存无处不在，某厂牛人曾经说过：”缓存就像清凉油，哪里不舒服，抹一下就好了”。高品质的存储容量小，价格高；低品质存储容量大，价格低，缓存的目的就在于”扩充”高品质存储的容量。本文探讨缓存相关的一些问题。</p>
+<p><strong>LRU替换算法</strong></p>
+<p>缓存的技术点包括内存管理和替换算法。LRU是使用最多的替换算法，每次淘汰最久没有使用的元素。LRU缓存实现分为两个部分：Hash表和LRU链表，Hash表用于查找缓存中的元素，LRU链表用于淘汰。内存常以Slab的方式管理。</p>
+<p><img src="./缓存设计的一些思考 _ NOSQL Notes_files/zrclip_001n5b88bbb7.png" style="WIDTH: 600px; HEIGHT: 308px" height="431" width="745"></p>
+<p>上图是Memcache的内存管理示意图，Memcache以Slab方式管理内存块，从系统申请1MB大小的大块内存并划分为不同大小的Chunk，不同Slab的Chunk大小依次为80字节，80 * 1.25，80 * 1.25^2, …。向Memcache中添加item时，Memcache会根据item的大小选择合适的Chunk。</p>
+<p>Oceanbase最初也采用LRU算法，只是内存管理有些不同。Oceanbase向系统申请2MB大小的大块内存，插入item时直接追加到最后一个2MB内存块的尾部，当缓存的内存量太大需要回收时根据一定的策略整块回收2MB的内存，比如回收最近最少使用的item所在的2MB内存块。这样的做法虽然不是特别精确，但是内存管理简单，对于系统初期很有好处。</p>
+<p><strong>缓存锁</strong></p>
+<p>缓存需要操作两个数据结构：Hash表和LRU链表。多线程操作cache时需要加锁，比较直接的做法是整体加一把大锁后再操作Hash表和LRU链表。有如下的优化思路：</p>
+<p>1, Hash表和LRU链表使用两把不同的锁，且Hash表锁的粒度可以降低到每个Hash桶一把锁。这种做法的难点是需要处理两种数据结构不一致导致的问题，假设操作顺序为read hash -&gt; del hash item -&gt; del lru item -&gt; read lru item，最后一次read lru item时item所在的内存块可能已经被回收或者重用，一般需要引入引用计数并考虑复杂的时序问题。</p>
+<p>2, 采用多个LRU链表以减少LRU表锁粒度。Hash表的锁冲突可以通过增加Hash桶的个数来解决，而LRU链表是一个整体，难以分解。可以将缓存的数据分成多个工作集，每个item属于某个工作集，每个工作集一个LRU链表。这样做的主要问题是可能不均衡，比如某个工作集很热，某些从整体上看比较热的数据也可能被淘汰。</p>
+<p>3, 牺牲LRU的精确性以减少锁。比如Mysql中的LRU算法变形，大致如下：将LRU链表分成两部分，前半部分和后半部分，如果访问的item在前半部分，什么也不做，而不是像传统的LRU算法那样将item移动到链表头部；又如Linux Page Cache中的CLOCK算法。Oceanbase目前的缓存算法也是通过牺牲精确性来减少锁。前面提到，Oceanbase缓存以2MB的内存块为单位进行淘汰，最开始采用LRU策略，每次淘汰最近最少使用的item所在的2MB内存块，然而，这样做的问题是需要维护最近最少使用的item，即每次读写缓存都需要加锁。后续我们将淘汰策略修改为：每个2MB的内存块记录一个访问次数和一个最近访问时间，每次读取item时，如果访问次数大于所有2MB内存块访问次数的平均值，更新最近访问时间；否则，将访问次数加1。根据记录的最近访问时间淘汰2MB内存块。虽然，这个算法的缓存命中率不容易评估，但是缓存读取只需要一些原子操作，不需要加锁，大大减少了锁粒度。</p>
+<p>4, 批量操作。缓存命中时不需要立即更新LRU链表，而是可以将命中的item保存在线程Buffer中，积累了一定数量后一次性更新LRU链表。</p>
+<p><strong>LIRS思想</strong></p>
+<p>Cache有两个问题：一个是前面提到的降低锁粒度，另一个是提高精准度，或者称为提高命中率。LRU在大多数情况下表现是不错的，但是有如下的问题：</p>
+<p>1, 顺序扫描。顺序扫描的情况下LRU没有命中情况，而且会淘汰其它将要被访问的item从而污染cache。</p>
+<p>2, 循环的数据集大于缓存大小。如果循环访问且数据集大于缓存大小，那么没有命中情况。</p>
+<p>之所以会出现上述一些比较极端的问题，是因为LRU只考虑访问时间而没有考虑访问频率，而LIRS在这方面做得比较好。LIRS将数据分为两部分：LIR（Low Inner-reference Recency）和HIR（High Inner-reference Recency），其中，LIR中的数据是热点，在较短的时间内被访问了至少两次。LIRS可以看成是一种分级思想：第一级是HIR，第二级是LIR，数据先进入到第一级，当数据在较短的时间内被访问两次时成为热点数据则进入LIR，HIR和LIR内部都采用LRU策略。这样，LIR中的数据比较稳定，解决了LRU的上述两个问题。LIRS论文中提出了一种实现方式，不过我们可以做一些变化，如可以实现两级cache，cache元素先进入第一级cache，当访问频率达到一定值（比如2）时升级到第二级，第一级和第二级均内部采用LRU进行替换。Oracle Buffer Cache中的Touch Count算法也是采用了类似的思想。</p>
+<p><strong>SSD与缓存</strong></p>
+<p>SSD发展很快，大有取代传统磁盘之势。SSD的发展是否会使得单机缓存变得毫无必要我们无从得知，目前，Memory + SSD + 磁盘的混合存储方案还是比较靠谱的。SSD使用可以有如下不同的模式：</p>
+<p>1, write-back：数据读写都走SSD，内存中的数据写入到SSD即可，另外有单独的线程定期将SSD中的数据刷到磁盘。典型的代表如Facebook Flashcache。</p>
+<p>2, write-through：数据写操作需要先写到磁盘，内存和SSD合在一起看成两级缓存，即cache中相对较冷的数据在SSD，相对较热的数据在内存。</p>
+<p>当然，随着SSD的应用，我想减少缓存锁粒度的重要性会越来越突出。</p>
+<p><strong>总结&amp;推荐资料</strong></p>
+<p>到目前为止，我们在SSD，缓存相关优化的工作还是比较少的。今后的一年左右时间，我们将会投入一定的精力在系统优化上，相信到时候再来总结的时候认识会更加深刻。我想，缓存相关的优化工作首先要做的是根据需求制定一个大致的评价标准，接着使用实际数据做一些实验，最终可能会同时保留两到三种实现方式或者配置略微有所不同的缓存实现。缓存相关的推荐资料如下：</p>
+<p>[1] Touch Count Algorithm. <a href="http://youyus.com/wp-content/uploads/resource/Shallahamer%20TC4a.pdf">http://youyus.com/wp-content/uploads/resource/Shallahamer%20TC4a.pdf</a></p>
+<p>[2] LIRS. <a href="http://portal.acm.org/citation.cfm?id=511340">http://portal.acm.org/citation.cfm?id=511340</a></p>
+<div id="j0fXiLUc4IhFhG8htZi" style="position: absolute; top: -1134px; left: -1435px; width: 352px;"><a href="http://viagraonlinemsa.com/">viagra online without prescription</a></div>
+					</div><!-- END entry -->
+		<div class="add-info">
+					</div>
+		<div class="post-info-bottom">
+			<span class="post-info-category"><a href="http://www.nosqlnotes.net/archives/category/%e7%90%86%e8%a7%a3%e7%b3%bb%e7%bb%9f" rel="category tag">体系结构与操作系统</a></span><span class="post-info-tags"><a href="http://www.nosqlnotes.net/archives/tag/%e7%bc%93%e5%ad%98%e8%ae%be%e8%ae%a1%ef%bc%8clirs%ef%bc%8ccache%e9%94%81%e7%b2%92%e5%ba%a6" rel="tag">缓存设计，LIRS，cache锁粒度</a></span>
+		</div>
+		<div id="nav-below">
+			<div class="nav-previous"><a href="http://www.nosqlnotes.net/archives/183" rel="prev"><span class="meta-nav">←</span> GDB的两个技巧</a></div>
+			<div class="nav-next"><a href="http://www.nosqlnotes.net/archives/226" rel="next">”云存储系统“赏析系列分享三：SQL与NOSQL <span class="meta-nav">→</span></a></div>
+		</div><!-- #nav-below -->					
+	</div><!-- END post -->
+	<!-- You can start editing here. -->
+
+				<div id="comments-div"><span id="comments-addcomment"><a href="http://www.nosqlnotes.net/archives/222#respond" rel="nofollow" title="Leave a comment ?">Leave a comment</a></span><h2 id="comments">9 Comments.</h2></div>
+			<ol class="commentlist" id="thecomments">
+					<li class="comment even thread-even depth-1" id="li-comment-6354">
+	<div id="comment-6354">
+		<div class="comment-author vcard">
+			<img alt="" src="http://0.gravatar.com/avatar/2f3b92251d56989e1fdbe07eb6299160?s=40&d=%3Cpath_to_url%3E&r=G" class="avatar avatar-40 photo" height="40" width="40">			<cite class="fn"><a href="http://blog.yufeng.info/" rel="external nofollow" class="url">褚霸</a></cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-6354">2011 年 06 月 20 日 下午 1:25</a></span>
+		</div>
+				<div class="comment-text">
+			<p>赞，LRU策略方面总结的很细致。</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=6354#respond" onclick="return addComment.moveForm(&quot;comment-6354&quot;, &quot;6354&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+</li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-6368">
+	<div id="comment-6368">
+		<div class="comment-author vcard">
+			<img alt="" src="http://0.gravatar.com/avatar/?d=path_to_url&s=40" class="avatar avatar-40 photo avatar-default" height="40" width="40">			<cite class="fn"><a href="http://xn--5tzm5g/" rel="external nofollow" class="url">jasonchang</a></cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-6368">2011 年 06 月 20 日 下午 3:00</a></span>
+		</div>
+				<div class="comment-text">
+			<p>传辉V5</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=6368#respond" onclick="return addComment.moveForm(&quot;comment-6368&quot;, &quot;6368&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+</li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="li-comment-6390">
+	<div id="comment-6390">
+		<div class="comment-author vcard">
+			<img alt="" src="./缓存设计的一些思考 _ NOSQL Notes_files/502dbef0a453e4346020b640c7818919" class="avatar avatar-40 photo" height="40" width="40">			<cite class="fn"><a href="http://xn--5tzm5g/" rel="external nofollow" class="url">yuecong</a></cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-6390">2011 年 06 月 20 日 下午 8:49</a></span>
+		</div>
+				<div class="comment-text">
+			<p>chuanhui老师你好，刚开始看您的文章，您对分布式存储和算法有比较深入的了解，我是应届生，刚入一家中型的电子商务网站可能从事网站系统运维或数据层面开发，我们每天PV量在600w以上并且很快会超1000w，所以要将memcache升级为Redis，并建Hadoop(Hbase)来配合Mysql，通过构建多个JettyServer实例来映射多个Chunk，我的问题是：如果从事数据层面开发的话，之后的研究方向就是memcache/Redis，Mysql，Hadoop，Hbase/MongoDB,我个人还是比较喜欢Nosql和数据缓存方面的，但以上实现语言是java，我不会java；对于系统运维，TCP/IP，Linux Shell和PHP我还是会一些；我很纠结是继续数据层面开发还是转向系统运维，不知道传辉老师能否抽出时间给些意见(上书邮箱，另附QQ：1070926295)，小生不胜感激……</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=6390#respond" onclick="return addComment.moveForm(&quot;comment-6390&quot;, &quot;6390&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+<ul class="children">
+<li class="comment byuser comment-author-admin bypostauthor odd alt depth-2" id="li-comment-6416">
+	<div id="comment-6416">
+		<div class="comment-author vcard">
+			<img alt="" src="./缓存设计的一些思考 _ NOSQL Notes_files/b45a3c758575b48c307f3484144ca899" class="avatar avatar-40 photo" height="40" width="40">			<cite class="fn">chuanhui</cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-6416">2011 年 06 月 21 日 上午 9:55</a></span>
+		</div>
+				<div class="comment-text">
+			<p>多谢信任，不过这个问题真是超出我的能力之外了。技术方向，学习，每个人的情况都不一样，你可以把技术问题提出来和其它人一起讨论，但是你自己的路怎么走更多还是需要自己来把握的。相信自己，因为你最了解你自己！</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=6416#respond" onclick="return addComment.moveForm(&quot;comment-6416&quot;, &quot;6416&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+</li><!-- #comment-## -->
+</ul><!-- .children -->
+</li><!-- #comment-## -->
+<li class="comment even thread-odd thread-alt depth-1" id="li-comment-6484">
+	<div id="comment-6484">
+		<div class="comment-author vcard">
+			<img alt="" src="./缓存设计的一些思考 _ NOSQL Notes_files/511f78d60818288a9942a31e34428bb9" class="avatar avatar-40 photo" height="40" width="40">			<cite class="fn"><a href="http://www.dbthink.com/" rel="external nofollow" class="url">jametong</a></cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-6484">2011 年 06 月 21 日 下午 8:13</a></span>
+		</div>
+				<div class="comment-text">
+			<p>我个人觉得,如果大部分应用架构都是基于Java开发的话,如果你没有一点Java的基础,系统运维也是很难做好的.</p>
+<p>你需要了解你的客户(Java开发人员)使用的技术,经常遇到的问题,比如,需要了解Java的部署,需要了解连接池(如果是DBA的话),需要了解Java的GC方式. 在支付宝,我们招聘ASA(应用SA)或者DBA的话,都希望对方有一点的Java基础的.</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=6484#respond" onclick="return addComment.moveForm(&quot;comment-6484&quot;, &quot;6484&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+</li><!-- #comment-## -->
+<li class="comment odd alt thread-even depth-1" id="li-comment-6488">
+	<div id="comment-6488">
+		<div class="comment-author vcard">
+			<img alt="" src="./缓存设计的一些思考 _ NOSQL Notes_files/502dbef0a453e4346020b640c7818919" class="avatar avatar-40 photo" height="40" width="40">			<cite class="fn"><a href="http://xn--5tzm5g/" rel="external nofollow" class="url">yuecong</a></cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-6488">2011 年 06 月 21 日 下午 9:18</a></span>
+		</div>
+				<div class="comment-text">
+			<p>多谢chuanhui老师，jamesong老师，我们这边应用架构是java+PHP，决定继续自己感兴趣的分布式存储和数据库应用开发，开始狂啃java，我在学校里学的是C和C++，攻了不少时间，不过既然曾经啃下过ADO.NET，PHP，就不怕java，语言是在实践应用过程中学会的，充满信心并准备迎接挑战…….</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=6488#respond" onclick="return addComment.moveForm(&quot;comment-6488&quot;, &quot;6488&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+</li><!-- #comment-## -->
+<li class="comment even thread-odd thread-alt depth-1" id="li-comment-7037">
+	<div id="comment-7037">
+		<div class="comment-author vcard">
+			<img alt="" src="./缓存设计的一些思考 _ NOSQL Notes_files/f027cc232080bdc17c9e1f40771f2964" class="avatar avatar-40 photo" height="40" width="40">			<cite class="fn"><a href="http://xn--5tzm5g/" rel="external nofollow" class="url">errno</a></cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-7037">2011 年 06 月 28 日 上午 10:03</a></span>
+		</div>
+				<div class="comment-text">
+			<p>LRU &amp; LIR is two simple for cache stragte in large data  status. </p>
+<p>N level LRU, should  be implemented for<br>
+data’accessed like Poisson distribution.</p>
+<p>in my design, i implemnt  two level of cache.<br>
+a cache filter: it decide what data  may be a hot.<br>
+a N level cache: in this cache, data will be first<br>
+hoter and hoter, while have arrived the highest postion, it will become colder and colder.</p>
+<p>a cache filter is some thing like bitsmap. every 8 bits is a unit or a hash solt. then it could range  0-2^8-1 .</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=7037#respond" onclick="return addComment.moveForm(&quot;comment-7037&quot;, &quot;7037&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+</li><!-- #comment-## -->
+<li class="comment odd alt thread-even depth-1" id="li-comment-9491">
+	<div id="comment-9491">
+		<div class="comment-author vcard">
+			<img alt="" src="./缓存设计的一些思考 _ NOSQL Notes_files/16588db0babd4904d1465b2173fd9b74" class="avatar avatar-40 photo" height="40" width="40">			<cite class="fn"><a href="http://blog.pipul.org/" rel="external nofollow" class="url">老栋</a></cite>
+			<span class="comment-meta commentmetadata"><a href="http://www.nosqlnotes.net/archives/222#comment-9491">2012 年 05 月 05 日 下午 11:38</a></span>
+		</div>
+				<div class="comment-text">
+			<p>今天看了下LIRS的论文和PPT，感觉论文的描述更加偏向微架构的实现的，论文中提到的那个LIR stack implementation，每次决定是否将一个HIR block加入到LIR的时候都需要往stack里扫描一遍，这个过程不会耗时吗？</p>
+		</div>
+		<div class="reply">
+			<a class="comment-reply-link" href="http://www.nosqlnotes.net/archives/222?replytocom=9491#respond" onclick="return addComment.moveForm(&quot;comment-9491&quot;, &quot;9491&quot;, &quot;respond&quot;, &quot;222&quot;)">回复</a>		</div>
+	</div>
+</li><!-- #comment-## -->
+			</ol>
+			<div class="navigation"></div>
+	
+	
+	<script type="text/javascript" language="javascript">
+/* <![CDATA[ */
+    function grin(tag) {
+    	var myField;
+    	tag = ' ' + tag + ' ';
+        if (document.getElementById('comment') && document.getElementById('comment').type == 'textarea') {
+    		myField = document.getElementById('comment');
+    	} else {
+    		return false;
+    	}
+    	if (document.selection) {
+    		myField.focus();
+    		sel = document.selection.createRange();
+    		sel.text = tag;
+    		myField.focus();
+    	}
+    	else if (myField.selectionStart || myField.selectionStart == '0') {
+    		var startPos = myField.selectionStart;
+    		var endPos = myField.selectionEnd;
+    		var cursorPos = endPos;
+    		myField.value = myField.value.substring(0, startPos)
+    					  + tag
+    					  + myField.value.substring(endPos, myField.value.length);
+    		cursorPos += tag.length;
+    		myField.focus();
+    		myField.selectionStart = cursorPos;
+    		myField.selectionEnd = cursorPos;
+    	}
+    	else {
+    		myField.value += tag;
+    		myField.focus();
+    	}
+    }
+/* ]]> */
+</script>
+									<div id="respond" class="comment-respond">
+				<h3 id="reply-title" class="comment-reply-title">发表评论 <small><a rel="nofollow" id="cancel-comment-reply-link" href="http://www.nosqlnotes.net/archives/222#respond" style="display:none;">取消回复</a></small></h3>
+									<form action="http://www.nosqlnotes.net/wp-comments-post.php" method="post" id="commentform" class="comment-form">
+																			<p class="comment-notes">电子邮件地址不会被公开。</p>							<p class="comment-form-author"><input id="author" name="author" type="text" value="" size="30"><label for="author">姓名</label></p>
+<p class="comment-form-email"><input id="email" name="email" type="text" value="" size="30"><label for="email">电子邮件</label></p>
+<p class="comment-form-url"><input id="url" name="url" type="text" value="" size="30"><label for="url">站点</label></p>
+												<p class="comment-form-comment"><textarea aria-required="true" rows="8" cols="45" name="comment" id="comment" onkeydown="if(event.ctrlKey){if(event.keyCode==13){document.getElementById(&#39;submit&#39;).click();return false}};"></textarea></p><p>
+<a href="javascript:grin(':?:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_question.gif" alt=""></a>
+<a href="javascript:grin(':razz:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_razz.gif" alt=""></a>
+<a href="javascript:grin(':sad:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_sad.gif" alt=""></a>
+<a href="javascript:grin(':evil:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_evil.gif" alt=""></a>
+<a href="javascript:grin(':!:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_exclaim.gif" alt=""></a>
+<a href="javascript:grin(':smile:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_smile.gif" alt=""></a>
+<a href="javascript:grin(':oops:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_redface.gif" alt=""></a>
+<a href="javascript:grin(':grin:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_biggrin.gif" alt=""></a>
+<a href="javascript:grin(':eek:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_surprised.gif" alt=""></a>
+<a href="javascript:grin(':shock:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_eek.gif" alt=""></a>
+<a href="javascript:grin(':???:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_confused.gif" alt=""></a>
+<a href="javascript:grin(':cool:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_cool.gif" alt=""></a>
+<a href="javascript:grin(':lol:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_lol.gif" alt=""></a>
+<a href="javascript:grin(':mad:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_mad.gif" alt=""></a>
+<a href="javascript:grin(':twisted:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_twisted.gif" alt=""></a>
+<a href="javascript:grin(':roll:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_rolleyes.gif" alt=""></a>
+<a href="javascript:grin(':wink:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_wink.gif" alt=""></a>
+<a href="javascript:grin(':idea:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_idea.gif" alt=""></a>
+<a href="javascript:grin(':arrow:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_arrow.gif" alt=""></a>
+<a href="javascript:grin(':neutral:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_neutral.gif" alt=""></a>
+<a href="javascript:grin(':cry:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_cry.gif" alt=""></a>
+<a href="javascript:grin(':mrgreen:')"><img src="./缓存设计的一些思考 _ NOSQL Notes_files/icon_mrgreen.gif" alt=""></a>
+<br></p>						<p class="form-allowed-tags">您可以使用这些<abbr title="HyperText Markup Language">HTML</abbr>标签和属性： <code>&lt;a href="" title=""&gt; &lt;abbr title=""&gt; &lt;acronym title=""&gt; &lt;b&gt; &lt;blockquote cite=""&gt; &lt;cite&gt; &lt;code&gt; &lt;del datetime=""&gt; &lt;em&gt; &lt;i&gt; &lt;q cite=""&gt; &lt;strike&gt; &lt;strong&gt; </code></p>						<p class="form-submit">
+							<input name="submit" type="submit" id="submit" value="发表评论">
+							<input type="hidden" name="comment_post_ID" value="222" id="comment_post_ID">
+<input type="hidden" name="comment_parent" id="comment_parent" value="0">
+						</p>
+						<p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="3d932aa66c"></p><p style="display: none;"></p>					<input type="hidden" id="ak_js" name="ak_js" value="1431651765537"></form>
+							</div><!-- #respond -->
+			
+			<div class="trackbacks-pingbacks">
+			<h3>Trackbacks and Pingbacks:</h3>
+			<ul id="pinglist">
+								<li id="comment-6267">
+					<a href="http://blog.middleware123.com/2911.html" rel="external nofollow" class="url">缓存设计的一些思考 - weblogic,tuxedo等中间件的配置,管理,优化,架构设计</a> - Pingback on 2011/06/19/ 22:26				</li>
+							</ul>
+		</div>
+	</div><!--content-->
+<div id="sidebar-border">
+	<div id="sidebar">
+
+
+<ul>
+	<li class="widget">
+		<h3>Recent Posts</h3>
+		<ul>
+						<li><span><a href="http://www.nosqlnotes.net/archives/333">持续可用与CAP理论 – 一个系统开发者的观点</a></span></li>
+						<li><span><a href="http://www.nosqlnotes.net/archives/250">AWS云平台系列介绍（一）：AWS平台与EC2介绍</a></span></li>
+						<li><span><a href="http://www.nosqlnotes.net/archives/242">2011年度总结</a></span></li>
+						<li><span><a href="http://www.nosqlnotes.net/archives/237">GFS架构分析</a></span></li>
+						<li><span><a href="http://www.nosqlnotes.net/archives/232">跨机房问题</a></span></li>
+					</ul>
+	</li>
+</ul>
+<ul>
+	<li class="widget">
+		<h3>Search by Tags!</h3>
+		<div><a href="http://www.nosqlnotes.net/archives/tag/amazon-dynamo%ef%bc%8c%e7%ba%a0%e7%bb%93%e7%9a%84%e8%ae%be%e8%ae%a1" class="tag-link-49" title="1个话题" style="font-size: 9pt;">Amazon Dynamo，纠结的设计</a>
+<a href="http://www.nosqlnotes.net/archives/tag/amazon-s3" class="tag-link-50" title="1个话题" style="font-size: 9pt;">Amazon S3</a>
+<a href="http://www.nosqlnotes.net/archives/tag/amazon-simpledb" class="tag-link-51" title="1个话题" style="font-size: 9pt;">Amazon Simpledb</a>
+<a href="http://www.nosqlnotes.net/archives/tag/azure-architecture" class="tag-link-14" title="1个话题" style="font-size: 9pt;">Azure Architecture</a>
+<a href="http://www.nosqlnotes.net/archives/tag/azure-internal" class="tag-link-15" title="1个话题" style="font-size: 9pt;">Azure Internal</a>
+<a href="http://www.nosqlnotes.net/archives/tag/azure-storage%ef%bc%8c%e4%ba%91%e5%ad%98%e5%82%a8" class="tag-link-54" title="1个话题" style="font-size: 9pt;">Azure Storage，云存储</a>
+<a href="http://www.nosqlnotes.net/archives/tag/bigtable" class="tag-link-11" title="2个话题" style="font-size: 18pt;">Bigtable</a>
+<a href="http://www.nosqlnotes.net/archives/tag/blob-file-system" class="tag-link-36" title="1个话题" style="font-size: 9pt;">Blob File System</a>
+<a href="http://www.nosqlnotes.net/archives/tag/cap" class="tag-link-21" title="1个话题" style="font-size: 9pt;">CAP</a>
+<a href="http://www.nosqlnotes.net/archives/tag/commit-log" class="tag-link-24" title="1个话题" style="font-size: 9pt;">Commit Log</a>
+<a href="http://www.nosqlnotes.net/archives/tag/computing-system" class="tag-link-29" title="1个话题" style="font-size: 9pt;">Computing System</a>
+<a href="http://www.nosqlnotes.net/archives/tag/designpractice" class="tag-link-27" title="1个话题" style="font-size: 9pt;">Design&amp;Practice</a>
+<a href="http://www.nosqlnotes.net/archives/tag/distributed-architecture" class="tag-link-13" title="2个话题" style="font-size: 18pt;">Distributed Architecture</a>
+<a href="http://www.nosqlnotes.net/archives/tag/distributed-transaction" class="tag-link-17" title="1个话题" style="font-size: 9pt;">Distributed Transaction</a>
+<a href="http://www.nosqlnotes.net/archives/tag/dynamo" class="tag-link-12" title="2个话题" style="font-size: 18pt;">Dynamo</a>
+<a href="http://www.nosqlnotes.net/archives/tag/engineering" class="tag-link-26" title="1个话题" style="font-size: 9pt;">Engineering</a>
+<a href="http://www.nosqlnotes.net/archives/tag/eventually-consistent" class="tag-link-22" title="1个话题" style="font-size: 9pt;">Eventually Consistent</a>
+<a href="http://www.nosqlnotes.net/archives/tag/facebook-haystack%ef%bc%8c%e5%9b%be%e7%89%87%e5%ad%98%e5%82%a8%ef%bc%8c%e6%b7%98%e5%ae%9dtfs" class="tag-link-35" title="1个话题" style="font-size: 9pt;">Facebook Haystack，图片存储，淘宝TFS</a>
+<a href="http://www.nosqlnotes.net/archives/tag/gdb%e6%8a%80%e5%b7%a7%ef%bc%8ccore-dump-stack%e5%a4%b1%e6%95%88%ef%bc%8c%e7%94%a8%e6%88%b7%e5%91%bd%e4%bb%a4%e8%84%9a%e6%9c%ac" class="tag-link-56" title="1个话题" style="font-size: 9pt;">GDB技巧，core dump stack失效，用户命令脚本</a>
+<a href="http://www.nosqlnotes.net/archives/tag/gfs" class="tag-link-37" title="2个话题" style="font-size: 18pt;">GFS</a>
+<a href="http://www.nosqlnotes.net/archives/tag/google-megastore%ef%bc%8c%e4%ba%8b%e5%8a%a1%e6%9c%ba%e5%88%b6" class="tag-link-46" title="1个话题" style="font-size: 9pt;">Google Megastore，事务机制</a>
+<a href="http://www.nosqlnotes.net/archives/tag/hdfs" class="tag-link-38" title="1个话题" style="font-size: 9pt;">HDFS</a>
+<a href="http://www.nosqlnotes.net/archives/tag/heartbeat" class="tag-link-31" title="1个话题" style="font-size: 9pt;">Heartbeat</a>
+<a href="http://www.nosqlnotes.net/archives/tag/homogeneous-system" class="tag-link-30" title="1个话题" style="font-size: 9pt;">Homogeneous System</a>
+<a href="http://www.nosqlnotes.net/archives/tag/lease" class="tag-link-32" title="1个话题" style="font-size: 9pt;">Lease</a>
+<a href="http://www.nosqlnotes.net/archives/tag/linux%e5%86%85%e5%ad%98%e7%ae%a1%e7%90%86%ef%bc%8clinux%e5%86%85%e6%a0%b8%ef%bc%8c%e5%86%85%e5%ad%98%e6%b3%84%e9%9c%b2" class="tag-link-34" title="1个话题" style="font-size: 9pt;">Linux内存管理，Linux内核，内存泄露</a>
+<a href="http://www.nosqlnotes.net/archives/tag/megastore" class="tag-link-47" title="1个话题" style="font-size: 9pt;">Megastore</a>
+<a href="http://www.nosqlnotes.net/archives/tag/merge-dump%ef%bc%8c%e5%ad%98%e5%82%a8%e5%bc%95%e6%93%8e%ef%bc%8cmemtable%ef%bc%8csstable" class="tag-link-40" title="1个话题" style="font-size: 9pt;">Merge-Dump，存储引擎，MemTable，SSTable</a>
+<a href="http://www.nosqlnotes.net/archives/tag/nosql%e4%b8%8esql%ef%bc%8cnosql%e6%80%9d%e7%bb%b4" class="tag-link-45" title="1个话题" style="font-size: 9pt;">NOSQL与SQL，NOSQL思维</a>
+<a href="http://www.nosqlnotes.net/archives/tag/oceanbase" class="tag-link-52" title="1个话题" style="font-size: 9pt;">Oceanbase</a>
+<a href="http://www.nosqlnotes.net/archives/tag/optimistic-concurrency" class="tag-link-19" title="1个话题" style="font-size: 9pt;">Optimistic Concurrency</a>
+<a href="http://www.nosqlnotes.net/archives/tag/pessimistic-concurrency" class="tag-link-20" title="1个话题" style="font-size: 9pt;">Pessimistic Concurrency</a>
+<a href="http://www.nosqlnotes.net/archives/tag/rdbms%e4%b8%8enosql" class="tag-link-48" title="1个话题" style="font-size: 9pt;">RDBMS与NOSQL</a>
+<a href="http://www.nosqlnotes.net/archives/tag/scalability" class="tag-link-23" title="1个话题" style="font-size: 9pt;">Scalability</a>
+<a href="http://www.nosqlnotes.net/archives/tag/sql-azure-design" class="tag-link-16" title="1个话题" style="font-size: 9pt;">SQL Azure Design</a>
+<a href="http://www.nosqlnotes.net/archives/tag/storage-system" class="tag-link-28" title="1个话题" style="font-size: 9pt;">Storage System</a>
+<a href="http://www.nosqlnotes.net/archives/tag/tfs" class="tag-link-39" title="1个话题" style="font-size: 9pt;">TFS</a>
+<a href="http://www.nosqlnotes.net/archives/tag/two-phase-commit" class="tag-link-18" title="1个话题" style="font-size: 9pt;">Two-phase commit</a>
+<a href="http://www.nosqlnotes.net/archives/tag/%e4%ba%91%e5%ad%98%e5%82%a8%ef%bc%8csql%e4%b8%8enosql" class="tag-link-58" title="1个话题" style="font-size: 9pt;">云存储，SQL与NOSQL</a>
+<a href="http://www.nosqlnotes.net/archives/tag/%e5%88%86%e5%b8%83%e5%bc%8f%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84%ef%bc%8c%e5%88%86%e5%b8%83%e5%bc%8fhash%e8%a1%a8%ef%bc%8c%e5%88%86%e5%b8%83%e5%bc%8fb%e6%a0%91" class="tag-link-44" title="1个话题" style="font-size: 9pt;">分布式数据结构，分布式Hash表，分布式B树</a>
+<a href="http://www.nosqlnotes.net/archives/tag/%e5%8d%83%e4%ba%bf%e7%ba%a7%e6%95%b0%e6%8d%ae%e5%ba%93" class="tag-link-53" title="1个话题" style="font-size: 9pt;">千亿级数据库</a>
+<a href="http://www.nosqlnotes.net/archives/tag/%e5%ae%95%e6%9c%ba%e6%a3%80%e6%b5%8b" class="tag-link-33" title="1个话题" style="font-size: 9pt;">宕机检测</a>
+<a href="http://www.nosqlnotes.net/archives/tag/%e5%b9%b4%e5%ba%a6%e6%80%bb%e7%bb%93%ef%bc%8cnosql%e6%9e%b6%e6%9e%84%e6%80%bb%e7%bb%93" class="tag-link-42" title="1个话题" style="font-size: 9pt;">年度总结，NOSQL架构总结</a>
+<a href="http://www.nosqlnotes.net/archives/tag/%e7%bc%93%e5%ad%98%e8%ae%be%e8%ae%a1%ef%bc%8clirs%ef%bc%8ccache%e9%94%81%e7%b2%92%e5%ba%a6" class="tag-link-57" title="1个话题" style="font-size: 9pt;">缓存设计，LIRS，cache锁粒度</a>
+<a href="http://www.nosqlnotes.net/archives/tag/%e9%9a%8f%e6%9c%ba%e8%af%bb%e5%86%99%ef%bc%8ckv%e5%ad%98%e5%82%a8%e5%bc%95%e6%93%8e" class="tag-link-41" title="1个话题" style="font-size: 9pt;">随机读写，KV存储引擎</a></div>
+	</li>	
+	<li class="widget">
+		<h3>Archives</h3>
+		<ul>
+				<li><a href="http://www.nosqlnotes.net/archives/date/2015/04">2015年四月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2012/04">2012年四月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2012/01">2012年一月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/10">2011年十月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/08">2011年八月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/07">2011年七月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/06">2011年六月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/05">2011年五月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/04">2011年四月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/03">2011年三月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/02">2011年二月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2011/01">2011年一月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2010/12">2010年十二月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2010/11">2010年十一月</a></li>
+	<li><a href="http://www.nosqlnotes.net/archives/date/2010/10">2010年十月</a></li>
+		</ul>
+	</li>
+	<li class="widget">
+		<h3>Links</h3>
+		<ul>
+			<li><a href="http://rdc.taobao.com/blog/cs/">淘宝核心系统官方blog</a></li>
+<li><a href="http://blog.yufeng.info/">褚霸的个人blog</a></li>
+<li><a href="http://blog.sina.com.cn/kern0612">阳老师的博客</a></li>
+		</ul>
+		<div class="fixed"></div>
+		<h3>Meta</h3>
+		<ul>
+			<li><a href="http://www.nosqlnotes.net/wp-login.php?action=register">注册</a></li>			<li><a href="http://www.nosqlnotes.net/wp-login.php">登录</a></li>
+					</ul>
+	</li>
+</ul>
+
+
+
+
+
+	</div><!-- end: #sidebar -->
+</div><!-- end: #sidebar-border --></div><!--wrapper-->
+<div class="fixed"></div>
+<div id="footer">
+	<div id="footer-inside">
+		<p>
+			Copyright&nbsp;©&nbsp;2015&nbsp;NOSQL Notes			&nbsp;|&nbsp;Powered by <a href="http://wordpress.org/">WordPress</a> 
+			&nbsp;|&nbsp;Theme <a href="http://zww.me/" title="designed by zwwooooo">zBench</a>
+			&nbsp;|&nbsp;Valid <a href="http://validator.w3.org/check?uri=referer" title="This page validates as XHTML 1.1 Transitional"><abbr title="eXtensible HyperText Markup Language">XHTML</abbr></a> and <a href="http://jigsaw.w3.org/css-validator/check/referer?profile=css3">CSS 3</a>
+		</p>
+		<span id="back-to-top">Δ <a href="http://www.nosqlnotes.net/archives/222#nav" rel="nofollow" title="Back to top">Top</a></span>
+	</div>
+</div><!--footer-->
+<script type="text/javascript" src="./缓存设计的一些思考 _ NOSQL Notes_files/form.js"></script>
+<script type="text/javascript" src="./缓存设计的一些思考 _ NOSQL Notes_files/comment-reply.min.js"></script>
+
+</body></html>

@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<!-- saved from url=(0044)http://robbinfan.com/blog/38/orm-cache-sumup -->
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=2.0">
+    <title>Web应用的缓存设计模式 - robbin的自言自语</title>
+    <meta name="description" content="ruby ## ORM缓存引言    从10年前的2003年开始，在Web应用领域，ORM(对象-关系映射)框架就开始逐渐普及，并且流行开来，其中最广为人知的就是Java的开源ORM框架Hibernate，后来Hibernate也成为了EJB3的实现框架；2005年以后，ORM开始普及到其他编程语言领域，其中最有名气的是Ruby on rails框架的ORM － ActiveRecord。如今各种开源...">
+    <meta name="author" content="Robbin Fan">
+    <link href="http://robbinfan.com/rss" rel="alternate" title="robbin的自言自语" type="application/rss+xml">
+    <link href="./Web应用的缓存设计模式 - robbin的自言自语_files/document.css" media="screen" rel="stylesheet" type="text/css">
+<link href="./Web应用的缓存设计模式 - robbin的自言自语_files/content.css" media="screen" rel="stylesheet" type="text/css">
+    <link href="./Web应用的缓存设计模式 - robbin的自言自语_files/github.css" media="screen" rel="stylesheet" type="text/css">
+<link href="./Web应用的缓存设计模式 - robbin的自言自语_files/github.min.css" media="screen" rel="stylesheet" type="text/css">
+
+  </head>
+  <body>
+    <div id="flash-notice"></div>
+    <div class="header">
+      <div class="wrap">
+      	<div class="user_img"><img src="./Web应用的缓存设计模式 - robbin的自言自语_files/website.png" width="80" height="80" alt="website icon"></div>
+        <div class="blog_title">robbin的自言自语</div>
+        <div class="write">
+          <a href="http://robbinfan.com/login">登录</a>        </div>
+        <div class="blog_motto">Small is beautiful, constraint is liberty.</div>
+      </div>
+    </div><!-- header -->
+    
+    <div class="nav">
+      <div class="wrap clearfix">
+      	<div class="search fr">
+          <form action="http://guge.io/" id="cse-search-box" method="get" onsubmit="return false;">
+            <input id="search-box" name="q" type="text" placeholder="Search" value="">
+            <button id="search-button"></button>
+          </form>
+        </div>
+        <ul>
+          <li><a href="http://robbinfan.com/">首页</a></li>
+          <li><a href="http://robbinfan.com/blog">博客</a></li>
+          <li><a href="http://robbinfan.com/tag">分类</a></li>
+          <li><a href="http://robbinfan.com/weibo">微博</a></li>
+          <li><a href="http://robbinfan.com/blog/28/about-robbin">关于</a></li>
+        </ul>
+      </div>
+    </div><!-- nav -->
+    
+    <div class="wrap clearfix">
+      
+
+<div class="left">
+  
+  <div class="con">
+    
+    <div class="content">
+    	<div class="tit clearfix">
+        <h1><a href="./Web应用的缓存设计模式 - robbin的自言自语_files/Web应用的缓存设计模式 - robbin的自言自语.html">Web应用的缓存设计模式</a></h1>
+        <a class="markdown" title="Markdown格式原文" href="http://robbinfan.com/blog/38/orm-cache-sumup.md"></a>
+      </div>
+      <div class="info clearfix">
+        <a class="tag" rel="tag" href="http://robbinfan.com/tag/ruby"><span>ruby</span></a>
+      </div>
+      <div class="text">
+        <h2>ORM缓存引言</h2>
+
+<p>从10年前的2003年开始，在Web应用领域，ORM(对象-关系映射)框架就开始逐渐普及，并且流行开来，其中最广为人知的就是Java的开源ORM框架Hibernate，后来Hibernate也成为了EJB3的实现框架；2005年以后，ORM开始普及到其他编程语言领域，其中最有名气的是Ruby on rails框架的ORM － ActiveRecord。如今各种开源框架的ORM，乃至ODM(对象-文档关系映射，用在访问NoSQLDB)层出不穷，功能都十分强大，也很普及。</p>
+
+<p>然而围绕ORM的性能问题，也一直有很多批评的声音。其实ORM的架构对插入缓存技术是非常容易的，我做的很多项目和产品，但凡使用ORM，缓存都是标配，性能都非常好。而且我发现业界使用ORM的案例都忽视了缓存的运用，或者说没有意识到ORM缓存可以带来巨大的性能提升。</p>
+
+<h2>ORM缓存应用案例</h2>
+
+<p>我们去年有一个老产品重写的项目，这个产品有超过10年历史了，数据库的数据量很大，多个表都是上千万条记录，最大的表记录达到了9000万条，Web访问的请求数每天有300万左右。</p>
+
+<p>老产品采用了传统的解决性能问题的方案：Web层采用了动态页面静态化技术，超过一定时间的文章生成静态HTML文件；对数据库进行分库分表，按年拆表。动态页面静态化和分库分表是应对大访问量和大数据量的常规手段，本身也有效。但它的缺点也很多，比方说增加了代码复杂度和维护难度，跨库运算的困难等等，这个产品的代码维护历来非常困难，导致bug很多。</p>
+
+<p>进行产品重写的时候，我们放弃了动态页面静态化，采用了纯动态网页；放弃了分库分表，直接操作千万级，乃至近亿条记录的大表进行SQL查询；也没有采取读写分离技术，全部查询都是在单台主数据库上进行；数据库访问全部使用ActiveRecord，进行了大量的ORM缓存。上线以后的效果非常好：单台MySQL数据库服务器CPU的IO Wait低于5%；用单台1U服务器2颗4核至强CPU已经可以轻松支持每天350万动态请求量；最重要的是，插入缓存并不需要代码增加多少复杂度，可维护性非常好。</p>
+
+<p>总之，采用ORM缓存是Web应用提升性能一种有效的思路，这种思路和传统的提升性能的解决方案有很大的不同，但它在很多应用场景(包括高度动态化的SNS类型应用)非常有效，而且不会显著增加代码复杂度，所以这也是我自己一直偏爱的方式。因此我一直很想写篇文章，结合示例代码介绍ORM缓存的编程技巧。</p>
+
+<p>今年春节前后，我开发自己的个人网站项目，有意识的大量使用了ORM缓存技巧。对一个没多少访问量的个人站点来说，有些过度设计了，但我也想借这个机会把常用的ORM缓存设计模式写成示例代码，提供给大家参考。我的个人网站源代码是开源的，托管在github上：<a href="https://github.com/robbin/robbin_site">robbin_site</a></p>
+
+<h2>ORM缓存的基本理念</h2>
+
+<p>我在2007年的时候写过一篇文章，分析ORM缓存的理念：<a href="http://robbinfan.com/blog/3/orm-cache">ORM对象缓存探讨</a> ，所以这篇文章不展开详谈了，总结来说，ORM缓存的基本理念是：</p>
+
+<ul>
+<li>以减少数据库服务器磁盘IO为最终目的，而不是减少发送到数据库的SQL条数。实际上使用ORM，会显著增加SQL条数，有时候会成倍增加SQL。</li>
+<li>数据库schema设计的取向是尽量设计 <em>细颗粒度</em> 的表，表和表之间用外键关联，颗粒度越细，缓存对象的单位越小，缓存的应用场景越广泛</li>
+<li>尽量避免多表关联查询，尽量拆成多个表单独的主键查询，尽量多制造 <code>n + 1</code> 条查询，不要害怕“臭名昭著”的 <code>n + 1</code> 问题，实际上 <code>n + 1</code> 才能有效利用ORM缓存</li>
+</ul>
+
+<h2>利用表关联实现透明的对象缓存</h2>
+
+<p>在设计数据库的schema的时候，设计多个细颗粒度的表，用外键关联起来。当通过ORM访问关联对象的时候，ORM框架会将关联对象的访问转化成用主键查询关联表，发送 <code>n + 1</code>条SQL。而基于主键的查询可以直接利用对象缓存。</p>
+
+<p>我们自己开发了一个基于ActiveRecord封装的对象缓存框架：<a href="https://github.com/csdn-dev/second_level_cache">second_level_cache</a> ，从这个ruby插件的名称就可以看出，实现借鉴了Hibernate的二级缓存实现。这个对象缓存的配置和使用，可以看我写的<a href="http://robbinfan.com/blog/33/activerecord-object-cache">ActiveRecord对象缓存配置</a> 。</p>
+
+<p>下面用一个实际例子来演示一下对象缓存起到的作用：访问我个人站点的首页。 这个页面的数据需要读取三张表：blogs表获取文章信息，blog_contents表获取文章内容，accounts表获取作者信息。三张表的model定义片段如下，完整代码请看<a href="https://github.com/robbin/robbin_site/tree/master/models">models</a> ：</p>
+
+<pre><code class="python"><span class="class"><span class="keyword">class</span> <span class="title">Account</span> &lt; <span class="title">ActiveRecord</span>:</span>:Base
+  acts_as_cached
+  has_many :blogs
+end
+
+<span class="class"><span class="keyword">class</span> <span class="title">Blog</span> &lt; <span class="title">ActiveRecord</span>:</span>:Base
+  acts_as_cached
+  belongs_to :blog_content, :dependent =&gt; :destroy 
+  belongs_to :account, :counter_cache =&gt; true
+end
+
+<span class="class"><span class="keyword">class</span> <span class="title">BlogContent</span> &lt; <span class="title">ActiveRecord</span>:</span>:Base
+  acts_as_cached
+end
+</code></pre>
+
+<p>传统的做法是发送一条三表关联的查询语句，类似这样的：</p>
+
+<pre><code class="sql"><span class="operator"><span class="keyword">SELECT</span> blogs.*, blog_contents.content, account.name 
+    <span class="keyword">FROM</span> blogs 
+    <span class="keyword">LEFT</span> <span class="keyword">JOIN</span> blog_contents <span class="keyword">ON</span> blogs.blog_content_id = blog_contents.id 
+    <span class="keyword">LEFT</span> <span class="keyword">JOIN</span> accounts <span class="keyword">ON</span> blogs.account_id = account.id
+</span></code></pre>
+
+<p>往往单条SQL语句就搞定了，但是复杂SQL的带来的表扫描范围可能比较大，造成的数据库服务器磁盘IO会高很多，数据库实际IO负载往往无法得到有效缓解。</p>
+
+<p>我的做法如下，完整代码请看<a href="https://github.com/robbin/robbin_site/blob/master/app/controllers/home.rb">home.rb</a> ：</p>
+
+<pre><code class="python"><span class="decorator">@blogs = Blog.order('id DESC').page(params[:page])</span>
+</code></pre>
+
+<p>这是一条分页查询，实际发送的SQL如下：</p>
+
+<pre><code class="sql"><span class="operator"><span class="keyword">SELECT</span> * <span class="keyword">FROM</span> blogs <span class="keyword">ORDER</span> <span class="keyword">BY</span> id <span class="keyword">DESC</span> LIMIT <span class="number">20</span>
+</span></code></pre>
+
+<p>转成了单表查询，磁盘IO会小很多。至于文章内容，则是通过<code>blog.content</code>的对象访问获得的，由于首页抓取20篇文章，所以实际上会多出来20条主键查询SQL访问blog_contents表。就像下面这样：</p>
+
+<pre><code class="perl">DEBUG -  BlogContent Load (<span class="number">0</span>.<span class="number">3</span>ms)  SELECT <span class="string">`blog_contents`</span>.* FROM <span class="string">`blog_contents`</span> WHERE <span class="string">`blog_contents`</span>.<span class="string">`id`</span> = <span class="number">29</span> LIMIT <span class="number">1</span>
+DEBUG -  BlogContent Load (<span class="number">0</span>.<span class="number">2</span>ms)  SELECT <span class="string">`blog_contents`</span>.* FROM <span class="string">`blog_contents`</span> WHERE <span class="string">`blog_contents`</span>.<span class="string">`id`</span> = <span class="number">28</span> LIMIT <span class="number">1</span>
+DEBUG -  BlogContent Load (<span class="number">1.3</span>ms)  SELECT <span class="string">`blog_contents`</span>.* FROM <span class="string">`blog_contents`</span> WHERE <span class="string">`blog_contents`</span>.<span class="string">`id`</span> = <span class="number">27</span> LIMIT <span class="number">1</span>
+......
+DEBUG -  BlogContent Load (<span class="number">0</span>.<span class="number">9</span>ms)  SELECT <span class="string">`blog_contents`</span>.* FROM <span class="string">`blog_contents`</span> WHERE <span class="string">`blog_contents`</span>.<span class="string">`id`</span> = <span class="number">10</span> LIMIT <span class="number">1</span>
+</code></pre>
+
+<p>但是主键查询SQL不会造成表的扫描，而且往往已经被数据库buffer缓存，所以基本不会发生数据库服务器的磁盘IO，因而总体的数据库IO负载会远远小于前者的多表联合查询。特别是当使用对象缓存之后，会缓存所有主键查询语句，这20条SQL语句往往并不会全部发生，特别是热点数据，缓存命中率很高：</p>
+
+<pre><code class="perl">DEBUG -  Cache <span class="keyword">read</span>: robbin/blog/<span class="number">29</span>/<span class="number">1</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/account/<span class="number">1</span>/<span class="number">0</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/blogcontent/<span class="number">29</span>/<span class="number">0</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/account/<span class="number">1</span>/<span class="number">0</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/blog/<span class="number">28</span>/<span class="number">1</span>
+......
+DEBUG -  Cache <span class="keyword">read</span>: robbin/blogcontent/<span class="number">11</span>/<span class="number">0</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/account/<span class="number">1</span>/<span class="number">0</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/blog/<span class="number">10</span>/<span class="number">1</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/blogcontent/<span class="number">10</span>/<span class="number">0</span>
+DEBUG -  Cache <span class="keyword">read</span>: robbin/account/<span class="number">1</span>/<span class="number">0</span>
+</code></pre>
+
+<p>拆分n+1条查询的方式，看起来似乎非常违反大家的直觉，但实际上这是真理，我实践经验证明：数据库服务器的瓶颈往往是磁盘IO，而不是SQL并发数量。因此 <em>拆分n+1条查询本质上是以增加n条SQL语句为代价，简化复杂SQL，换取数据库服务器磁盘IO的降低</em>  当然这样做以后，对于ORM来说，有额外的好处，就是可以高效的使用缓存了。</p>
+
+<h2>按照column拆表实现细粒度对象缓存</h2>
+
+<p>数据库的瓶颈往往在磁盘IO上，所以应该尽量避免对大表的扫描。传统的拆表是按照row去拆分，保持表的体积不会过大，但是缺点是造成应用代码复杂度很高；使用ORM缓存的办法，则是按照column进行拆表，原则一般是：</p>
+
+<ul>
+<li>将大字段拆分出来，放在一个单独的表里面，表只有主键和大字段，外键放在主表当中</li>
+<li>将不参与where条件和统计查询的字段拆分出来，放在独立的表中，外键放在主表当中</li>
+</ul>
+
+<p><em>按照column拆表本质上是一个去关系化的过程。主表只保留参与关系运算的字段，将非关系型的字段剥离到关联表当中，关联表仅允许主键查询，以Key-Value DB的方式来访问。因此这种缓存设计模式本质上是一种SQLDB和NoSQLDB的混合架构设计</em></p>
+
+<p>下面看一个实际的例子：文章的内容content字段是一个大字段，该字段不能放在blogs表中，否则会造成blogs表过大，表扫描造成较多的磁盘IO。我实际做法是创建blog_contents表，保存content字段，schema简化定义如下：</p>
+
+<pre><code class="sql"><span class="operator"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`blogs`</span> (
+  <span class="string">`id`</span> <span class="keyword">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,
+  <span class="string">`title`</span> <span class="keyword">varchar</span>(<span class="number">255</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,
+  <span class="string">`blog_content_id`</span> <span class="keyword">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,
+  <span class="string">`content_updated_at`</span> datetime <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span>,
+  <span class="keyword">PRIMARY</span> <span class="keyword">KEY</span> (<span class="string">`id`</span>),
+);</span>
+
+<span class="operator"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> <span class="string">`blog_contents`</span> (
+  <span class="string">`id`</span> <span class="keyword">int</span>(<span class="number">11</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,
+  <span class="string">`content`</span> mediumtext <span class="keyword">NOT</span> <span class="keyword">NULL</span>,
+  <span class="keyword">PRIMARY</span> <span class="keyword">KEY</span> (<span class="string">`id`</span>)
+);</span>
+</code></pre>
+
+<p>blog_contents表只有content大字段，其外键保存到主表blogs的blog_content_id字段里面。</p>
+
+<p>model定义和相关的封装如下：</p>
+
+<pre><code class="ruby"><span class="class"><span class="keyword">class</span> <span class="title">Blog</span> <span class="inheritance">&lt; <span class="parent">ActiveRecord::Base</span></span></span>
+  <span class="identifier">acts_as_cached</span>
+  <span class="identifier">delegate</span> <span class="symbol">:<span class="identifier">content</span></span>, <span class="symbol">:<span class="identifier">to</span></span> =&gt; <span class="symbol">:<span class="identifier">blog_content</span></span>, <span class="symbol">:<span class="identifier">allow_nil</span></span> =&gt; <span class="identifier"><span class="keyword">true</span></span>
+
+  <span class="function"><span class="keyword">def</span> <span class="title">content=</span><span class="params">(<span class="identifier">value</span>)</span></span>
+    <span class="identifier"><span class="keyword">self</span></span>.<span class="identifier">blog_content</span> ||= <span class="constant">BlogContent</span>.<span class="identifier"><span class="keymethods">new</span></span>
+    <span class="identifier"><span class="keyword">self</span></span>.<span class="identifier">blog_content</span>.<span class="identifier">content</span> = <span class="identifier">value</span>
+    <span class="identifier"><span class="keyword">self</span></span>.<span class="identifier">content_updated_at</span> = <span class="constant">Time</span>.<span class="identifier">now</span>
+  <span class="identifier"><span class="keyword">end</span></span>
+<span class="identifier"><span class="keyword">end</span></span>
+
+<span class="class"><span class="keyword">class</span> <span class="title">BlogContent</span> <span class="inheritance">&lt; <span class="parent">ActiveRecord::Base</span></span></span>
+  <span class="identifier">acts_as_cached</span>
+  <span class="identifier">validates</span> <span class="symbol">:<span class="identifier">content</span></span>, <span class="symbol">:<span class="identifier">presence</span></span> =&gt; <span class="identifier"><span class="keyword">true</span></span>
+<span class="identifier"><span class="keyword">end</span></span>    
+</code></pre>
+
+<p>在Blog类上定义了虚拟属性content，当访问<code>blog.content</code>的时候，实际上会发生一条主键查询的SQL语句，获取<code>blog_content.content</code>内容。由于BlogContent上面定义了对象缓存<code>acts_as_cached</code>，只要被访问过一次，content内容就会被缓存到memcached里面。</p>
+
+<p>这种缓存技术实际会非常有效，因为： <em>只要缓存足够大，所有文章内容可以全部被加载到缓存当中，无论文章内容表有多么大，你都不需要再访问数据库了</em>  更进一步的是： <em>这张大表你永远都只需要通过主键进行访问，绝无可能出现表扫描的状况</em>  为何当数据量大到9000万条记录以后，我们的系统仍然能够保持良好的性能，秘密就在于此。</p>
+
+<p>还有一点非常重要： <em>使用以上两种对象缓存的设计模式，你除了需要添加一条缓存声明语句acts_as_cached以外，不需要显式编写一行代码</em>  有效利用缓存的代价如此之低，何乐而不为呢？</p>
+
+<p>以上两种缓存设计模式都不需要显式编写缓存代码，以下的缓存设计模式则需要编写少量的缓存代码，不过代码的增加量非常少。</p>
+
+<h2>写一致性缓存</h2>
+
+<p>写一致性缓存，叫做write-through cache，是一个CPU Cache借鉴过来的概念，意思是说，当数据库记录被修改以后，同时更新缓存，不必进行额外的缓存过期处理操作。但在应用系统中，我们需要一点技巧来实现写一致性缓存。来看一个例子：</p>
+
+<p>我的网站文章原文是markdown格式的，当页面显示的时候，需要转换成html的页面，这个转换过程本身是非常消耗CPU的，我使用的是Github的markdown的库。Github为了提高性能，用C写了转换库，但如果是非常大的文章，仍然是一个耗时的过程，Ruby应用服务器的负载就会比较高。</p>
+
+<p>我的解决办法是缓存markdown原文转换好的html页面的内容，这样当再次访问该页面的时候，就不必再次转换了，直接从缓存当中取出已经缓存好的页面内容即可，极大提升了系统性能。我的网站文章最终页的代码执行时间开销往往小于10ms，就是这个原因。代码如下：</p>
+
+<pre><code class="ruby"><span class="function"><span class="keyword">def</span> <span class="title">md_content</span> </span> <span class="comment"># cached markdown format blog content</span>
+  <span class="constant">APP_CACHE</span>.<span class="identifier"><span class="keymethods">fetch</span></span>(<span class="identifier">content_cache_key</span>) { <span class="constant">GitHub::Markdown</span>.<span class="identifier">to_html</span>(<span class="identifier">content</span>, <span class="symbol">:<span class="identifier">gfm</span></span>) }
+<span class="identifier"><span class="keyword">end</span></span>
+</code></pre>
+
+<p>这里存在一个如何进行缓存过期的问题，当文章内容被修改以后，应该更新缓存内容，让老的缓存过期，否则就会出现数据不一致的现象。进行缓存过期处理是比较麻烦的，我们可以利用一个技巧来实现自动缓存过期：</p>
+
+<pre><code class="ruby"><span class="function"><span class="keyword">def</span> <span class="title">content_cache_key</span></span>
+  <span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/blog_content/<span class="subst">#{<span class="identifier"><span class="keyword">self</span></span>.<span class="identifier"><span class="keymethods">id</span></span>}</span>/<span class="subst">#{<span class="identifier">content_updated_at</span>.<span class="identifier"><span class="keymethods">to_i</span></span>}</span>"</span>
+<span class="identifier"><span class="keyword">end</span></span>
+</code></pre>
+
+<p>当构造缓存对象的key的时候，我用文章内容被更新的时间来构造key值，这个文章内容更新时间用的是blogs表的content_updated_at字段，当文章被更新的时候，blogs表会进行update，更新该字段。因此每当文章内容被更新，缓存的页面内容的key就会改变，应用程序下次访问文章页面的时候，缓存就会失效，于是重新调用<code>GitHub::Markdown.to_html(content, :gfm)</code>生成新的页面内容。 而老的页面缓存内容再也不会被应用程序存取，根据memcached的LRU算法，当缓存填满之后，将被优先剔除。</p>
+
+<p>除了文章内容缓存之外，文章的评论内容转换成html以后也使用了这种缓存设计模式。具体可以看相应的源代码：<a href="https://github.com/robbin/robbin_site/blob/master/models/blog_comment.rb">blog_comment.rb</a></p>
+
+<h2>片段缓存和过期处理</h2>
+
+<p>Web应用当中有大量的并非实时更新的数据，这些数据都可以使用缓存，避免每次存取的时候都进行数据库查询和运算。这种片段缓存的应用场景很多，例如：</p>
+
+<ul>
+<li>展示网站的Tag分类统计(只要没有更新文章分类，或者发布新文章，缓存一直有效)</li>
+<li>输出网站RSS(只要没有发新文章，缓存一直有效)</li>
+<li>网站右侧栏(如果没有新的评论或者发布新文章，则在一段时间例如一天内基本不需要更新)</li>
+</ul>
+
+<p>以上应用场景都可以使用缓存，代码示例：</p>
+
+<pre><code class="ruby"><span class="function"><span class="keyword">def</span> <span class="title"><span class="keyword">self</span></span>.<span class="title">cached_tag_cloud</span></span>
+  <span class="constant">APP_CACHE</span>.<span class="identifier"><span class="keymethods">fetch</span></span>(<span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/blog_tags/tag_cloud"</span>) <span class="identifier"><span class="keyword">do</span></span>
+    <span class="identifier"><span class="keyword">self</span></span>.<span class="identifier">tag_counts</span>.<span class="identifier"><span class="keymethods">sort_by</span></span>(&amp;<span class="symbol">:<span class="identifier"><span class="keymethods">count</span></span></span>).<span class="identifier"><span class="keymethods">reverse</span></span>
+  <span class="identifier"><span class="keyword">end</span></span>
+<span class="identifier"><span class="keyword">end</span></span>
+</code></pre>
+
+<p>对全站文章的Tag云进行查询，对查询结果进行缓存  </p>
+
+<pre><code class="xml"><span class="vbscript">&lt;% cache("#{CACHE_PREFIX}/layout/right", :expires_in =&gt; 1.day) do %&gt;</span>
+
+<span class="tag">&lt;<span class="title">div</span> <span class="attribute">class</span>=<span class="value">"tag"</span>&gt;</span>
+  <span class="vbscript">&lt;% Blog.cached_tag_cloud.select {|t| t.count &gt; 2}.each do |tag| %&gt;</span>
+  <span class="vbscript">&lt;%= link_to "#{tag.name}&lt;span&gt;#{tag.count}&lt;/span&gt;".html_safe, url(:blog, :tag, :name =&gt; tag.name) %&gt;</span>
+  <span class="vbscript">&lt;% end %&gt;</span>
+<span class="tag">&lt;/<span class="title">div</span>&gt;</span>
+......
+<span class="vbscript">&lt;% end %&gt;</span>
+</code></pre>
+
+<p>对全站右侧栏页面进行缓存，过期时间是1天。</p>
+
+<p>缓存的过期处理往往是比较麻烦的事情，但在ORM框架当中，我们可以利用model对象的回调，很容易实现缓存过期处理。我们的缓存都是和文章，以及评论相关的，所以可以直接注册Blog类和BlogComment类的回调接口，声明当对象被保存或者删除的时候调用删除方法：</p>
+
+<pre><code class="ruby"><span class="class"><span class="keyword">class</span> <span class="title">Blog</span> <span class="inheritance">&lt; <span class="parent">ActiveRecord::Base</span></span></span>
+  <span class="identifier">acts_as_cached</span>
+  <span class="identifier">after_save</span> <span class="symbol">:<span class="identifier">clean_cache</span></span>
+  <span class="identifier">before_destroy</span> <span class="symbol">:<span class="identifier">clean_cache</span></span>
+  <span class="function"><span class="keyword">def</span> <span class="title">clean_cache</span></span>
+    <span class="constant">APP_CACHE</span>.<span class="identifier"><span class="keymethods">delete</span></span>(<span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/blog_tags/tag_cloud"</span>)   <span class="comment"># clean tag_cloud</span>
+    <span class="constant">APP_CACHE</span>.<span class="identifier"><span class="keymethods">delete</span></span>(<span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/rss/all"</span>)               <span class="comment"># clean rss cache</span>
+    <span class="constant">APP_CACHE</span>.<span class="identifier"><span class="keymethods">delete</span></span>(<span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/layout/right"</span>)          <span class="comment"># clean layout right column cache in _right.erb</span>
+  <span class="identifier"><span class="keyword">end</span></span>
+<span class="identifier"><span class="keyword">end</span></span>
+
+<span class="class"><span class="keyword">class</span> <span class="title">BlogComment</span> <span class="inheritance">&lt; <span class="parent">ActiveRecord::Base</span></span></span>
+  <span class="identifier">acts_as_cached</span>
+  <span class="identifier">after_save</span> <span class="symbol">:<span class="identifier">clean_cache</span></span>
+  <span class="identifier">before_destroy</span> <span class="symbol">:<span class="identifier">clean_cache</span></span>
+  <span class="function"><span class="keyword">def</span> <span class="title">clean_cache</span></span>
+    <span class="constant">APP_CACHE</span>.<span class="identifier"><span class="keymethods">delete</span></span>(<span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/layout/right"</span>)     <span class="comment"># clean layout right column cache in _right.erb</span>
+  <span class="identifier"><span class="keyword">end</span></span>
+<span class="identifier"><span class="keyword">end</span></span>  
+</code></pre>
+
+<p>在Blog对象的<code>after_save</code>和<code>before_destroy</code>上注册<code>clean_cache</code>方法，当文章被修改或者删除的时候，删除以上缓存内容。总之，可以利用ORM对象的回调接口进行缓存过期处理，而不需要到处写缓存清理代码。</p>
+
+<h2>对象写入缓存</h2>
+
+<p>我们通常说到缓存，总是认为缓存是提升应用读取性能的，其实缓存也可以有效的提升应用的写入性能。我们看一个常见的应用场景：记录文章点击次数这个功能。</p>
+
+<p>文章点击次数需要每次访问文章页面的时候，都要更新文章的点击次数字段view_count，然后文章必须实时显示文章的点击次数，因此常见的读缓存模式完全无效了。每次访问都必须更新数据库，当访问量很大以后数据库是吃不消的，因此我们必须同时做到两点：</p>
+
+<ul>
+<li>每次文章页面被访问，都要实时更新文章的点击次数，并且显示出来</li>
+<li>不能每次文章页面被访问，都更新数据库，否则数据库吃不消</li>
+</ul>
+
+<p>对付这种应用场景，我们可以利用对象缓存的不一致，来实现对象写入缓存。原理就是每次页面展示的时候，只更新缓存中的对象，页面显示的时候优先读取缓存，但是不更新数据库，让缓存保持不一致，积累到n次，直接更新一次数据库，但绕过缓存过期操作。具体的做法可以参考<a href="https://github.com/robbin/robbin_site/blob/master/models/blog.rb">blog.rb</a> ：</p>
+
+<pre><code class="ruby"><span class="comment"># blog viewer hit counter</span>
+<span class="function"><span class="keyword">def</span> <span class="title">increment_view_count</span></span>
+  <span class="identifier">increment</span>(<span class="symbol">:<span class="identifier">view_count</span></span>)        <span class="comment"># add view_count += 1</span>
+  <span class="identifier">write_second_level_cache</span>      <span class="comment"># update cache per hit, but do not touch db</span>
+                                <span class="comment"># update db per 10 hits</span>
+  <span class="identifier"><span class="keyword">self</span></span>.<span class="class"><span class="keyword">class</span>.<span class="title">update_all</span>({:<span class="title">view_count</span> =&gt; <span class="title">view_count</span>}, :<span class="title">id</span> =&gt; <span class="title">id</span>) <span class="title">if</span> <span class="title">view_count</span> % 10 == 0</span>
+<span class="identifier"><span class="keyword">end</span></span>
+</code></pre>
+
+<p><code>increment(:view_count)</code>增加view_count计数，关键代码是第2行<code>write_second_level_cache</code>，更新view_count之后直接写入缓存，但不更新数据库。累计10次点击，再更新一次数据库相应的字段。另外还要注意，如果blog对象不是通过主键查询，而是通过查询语句构造的，要优先读取一次缓存，保证页面点击次数的显示一致性，因此 <a href="https://github.com/robbin/robbin_site/blob/master/app/views/blog/_blog.erb">_blog.erb</a> 这个页面模版文件开头有这样一段代码：</p>
+
+<pre><code class="ruby">&lt;% 
+  <span class="comment"># read view_count from model cache if model has been cached.</span>
+  <span class="identifier">view_count</span> = <span class="identifier">blog</span>.<span class="identifier">view_count</span>
+  <span class="identifier"><span class="keyword">if</span></span> <span class="identifier">b</span> = <span class="constant">Blog</span>.<span class="identifier">read_second_level_cache</span>(<span class="identifier">blog</span>.<span class="identifier"><span class="keymethods">id</span></span>)
+    <span class="identifier">view_count</span> = <span class="identifier">b</span>.<span class="identifier">view_count</span>
+  <span class="identifier"><span class="keyword">end</span></span>
+%&gt;
+</code></pre>
+
+<p>采用对象写入缓存的设计模式，就可以非常容易的实现写入操作的缓存，在这个例子当中，我们仅仅增加了一行缓存写入代码，而这个时间开销大约是1ms，就可以实现文章实时点击计数功能，是不是非常简单和巧妙？实际上我们也可以使用这种设计模式实现很多数据库写入的缓存功能。</p>
+
+<p>常用的ORM缓存设计模式就是以上的几种，本质上都是非常简单的编程技巧，代码的增加量和复杂度也非常低，只需要很少的代码就可以实现，但是在实际应用当中，特别是当数据量很庞大，访问量很高的时候，可以发挥惊人的效果。我们实际的系统当中，缓存命中次数:SQL查询语句，一般都是5:1左右，即每次向数据库查询一条SQL，都会在缓存当中命中5次，数据主要都是从缓存当中得到，而非来自于数据库了。</p>
+
+<h2>其他缓存的使用技巧</h2>
+
+<p>还有一些并非ORM特有的缓存设计模式，但是在Web应用当中也比较常见，简单提及一下：</p>
+
+<h3>用数据库来实现的缓存</h3>
+
+<p>在我这个网站当中，每篇文章都标记了若干tag，而tag关联关系都是保存到数据库里面的，如果每次显示文章，都需要额外查询关联表获取tag，显然会非常消耗数据库。在我使用的<code>acts-as-taggable-on</code>插件中，它在blogs表当中添加了一个<code>cached_tag_list</code>字段，保存了该文章标记的tag。当文章被修改的时候，会自动相应更新该字段，避免了每次显示文章的时候都需要去查询关联表的开销。</p>
+
+<h3>HTTP客户端缓存</h3>
+
+<p>基于资源协议实现的HTTP客户端缓存也是一种非常有效的缓存设计模式，我在2009年写过一篇文章详细的讲解了：<a href="http://robbinfan.com/blog/13/http-cache-implement">基于资源的HTTP Cache的实现介绍</a> ，所以这里就不再复述了。</p>
+
+<h3>用缓存实现计数器功能</h3>
+
+<p>这种设计模式有点类似于对象写入缓存，利用缓存写入的低开销来实现高性能计数器。举一个例子：用户登录为了避免遭遇密码暴力破解，我限定了每小时每IP只能尝试登录5次，如果超过5次，拒绝该IP再次尝试登录。代码实现很简单，如下：</p>
+
+<pre><code class="ruby"><span class="identifier">post</span> <span class="symbol">:<span class="identifier">login</span></span>, <span class="symbol">:<span class="identifier"><span class="keymethods">map</span></span></span> =&gt; <span class="string">'/login'</span> <span class="identifier"><span class="keyword">do</span></span>
+  <span class="identifier">login_tries</span> = <span class="constant">APP_CACHE</span>.<span class="identifier"><span class="keymethods">read</span></span>(<span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/login_counter/<span class="subst">#{<span class="identifier">request</span>.<span class="identifier">ip</span>}</span>"</span>)
+  <span class="identifier">halt</span> <span class="number">403</span> <span class="identifier"><span class="keyword">if</span></span> <span class="identifier">login_tries</span> &amp;&amp; <span class="identifier">login_tries</span>.<span class="identifier"><span class="keymethods">to_i</span></span> &gt; <span class="number">5</span>  <span class="comment"># reject ip if login tries is over 5 times</span>
+  <span class="variable">@account</span> = <span class="constant">Account</span>.<span class="identifier"><span class="keymethods">new</span></span>(<span class="identifier">params</span>[<span class="symbol">:<span class="identifier">account</span></span>])
+  <span class="identifier"><span class="keyword">if</span></span> <span class="identifier">login_account</span> = <span class="constant">Account</span>.<span class="identifier">authenticate</span>(<span class="variable">@account</span>.<span class="identifier">email</span>, <span class="variable">@account</span>.<span class="identifier">password</span>)
+    <span class="identifier">session</span>[<span class="symbol">:<span class="identifier">account_id</span></span>] = <span class="identifier">login_account</span>.<span class="identifier"><span class="keymethods">id</span></span>
+    <span class="identifier">redirect</span> <span class="identifier">url</span>(<span class="symbol">:<span class="identifier"><span class="keymethods">index</span></span></span>)
+  <span class="identifier"><span class="keyword">else</span></span>
+    <span class="comment"># retry 5 times per one hour</span>
+    <span class="constant">APP_CACHE</span>.<span class="identifier">increment</span>(<span class="string">"<span class="subst">#{<span class="constant">CACHE_PREFIX</span>}</span>/login_counter/<span class="subst">#{<span class="identifier">request</span>.<span class="identifier">ip</span>}</span>"</span>, <span class="number">1</span>, <span class="symbol">:<span class="identifier">expires_in</span></span> =&gt; <span class="number">1</span>.<span class="identifier">hour</span>)
+    <span class="identifier">render</span> <span class="string">'home/login'</span>
+  <span class="identifier"><span class="keyword">end</span></span>
+<span class="identifier"><span class="keyword">end</span></span>
+</code></pre>
+
+<p>等用户POST提交登录信息之后，先从缓存当中取该IP尝试登录次数，如果大于5次，直接拒绝掉；如果不足5次，而且登录失败，计数加1，显示再次尝试登录页面。</p>
+
+<p>以上相关代码可以从这里获取：<a href="https://github.com/robbin/robbin_site">robbin_site</a></p>
+
+      </div>
+      <div class="info clearfix">
+        <div class="fr">
+          <span class="author">robbin</span>
+          <span class="time">2013-03-07发表</span>
+          <span class="edit">2013-03-07更新</span>
+          <span class="views" title="浏览次数">69235次浏览</span>
+        </div>
+      </div>
+    </div><!-- content -->
+  
+    <div class="share clearfix">
+      <span><script type="text/javascript">
+(function(){
+  var _w = 106 , _h = 58;
+  var param = {
+    url:location.href,
+    type:'5',
+    count:'1', /**是否显示分享数，1显示(可选)*/
+    appkey:'2980914535', /**您申请的应用appkey,显示分享来源(可选)*/
+    title:'Web应用的缓存设计模式:## ORM缓存引言从10年前的2003年开始，在Web应用领域，ORM(对象-关系映射)框架就开始逐渐普及，并且流行开来，其中最广为人知的就是Java的开源ORM框架Hibernate，后来Hibe...', /**分享的文字内容(可选，默认为所在页面的title)*/
+    pic:'', /**分享图片的路径(可选)*/
+    ralateUid:'1654762921', /**关联用户的UID，分享微博会@该用户(可选)*/
+    language:'zh_cn', /**设置语言，zh_cn|zh_tw(可选)*/
+    rnd:new Date().valueOf()
+  }
+  var temp = [];
+  for( var p in param ){
+    temp.push(p + '=' + encodeURIComponent( param[p] || '' ) )
+  }
+  document.write('<iframe allowTransparency="true" frameborder="0" scrolling="no" src="http://hits.sinajs.cn/A1/weiboshare.html?' + temp.join('&') + '" width="'+ _w+'" height="'+_h+'"></iframe>')
+})()
+</script><iframe allowtransparency="true" frameborder="0" scrolling="no" src="./Web应用的缓存设计模式 - robbin的自言自语_files/weiboshare.html" width="106" height="58"></iframe></span>
+    </div><!-- share -->
+    
+    <div class="comment clearfix">
+      <div id="comments">      
+        <h2><span>52</span>条评论</h2>
+        <ul>
+          <li class="clearfix" id="769">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1686230641"><img alt="吊儿郎当郎丶" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1686230641">吊儿郎当郎丶</a></span>
+      <span class="time">昨天</span>
+    </div>
+    <div class="comment_content"><p>请教下博主：关于点击数循环写入库的疑问，如果我写入memcached,%10=0插入mysql,如果在没有插入库之前。key被flush掉，或者被LRU算法淘汰点，是不是数据丢失了？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="755">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1271351831"><img alt="rubyu2" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(1)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1271351831">rubyu2</a></span>
+      <span class="time">2015-03-15</span>
+    </div>
+    <div class="comment_content"><p>重读一遍，依然受益匪浅。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="747">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1599926364"><img alt="唐冲人" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(2)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1599926364">唐冲人</a></span>
+      <span class="time">2015-01-15</span>
+    </div>
+    <div class="comment_content"><p>文章讲到把多表关联拆成N+1的模式进行分解，然后通过缓存来提高效率，但是我目前做的项目会存在大量的多表查询，且查询条件是不同表的字段，这种业务用这种N+1的方式分解貌似不可行，有没有好的解决方案呢？谢谢</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="509">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1510564941"><img alt="查尔斯-中国" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(3)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1510564941">查尔斯-中国</a></span>
+      <span class="time">2013-11-11</span>
+    </div>
+    <div class="comment_content"><p>用缓存保存登录错误次数，万一早上登录5次，失败锁了，下午的时候再登录，此时这个缓存被置换出去了怎么办，如果访问量确实有这么大的话。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="484">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1838208214"><img alt="Jeff_duan" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(4)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1838208214">Jeff_duan</a></span>
+      <span class="time">2013-09-30</span>
+    </div>
+    <div class="comment_content"><p>说句实在话， 你说到的几条正是如今NoSQL天然具备的一些特性和优势所在。 （小应用还是请远离hibernate和mySQL吧）</p>
+
+<p>对于blog这种类型的网站， 个人感觉后台cache做起来要容易的多， forum稍微复杂一些但是也还是很容易的。 而真正的挑战是从 twitter/微博， facebook， tumblr这种对于每个人都生成完全不同内容的timeline的Web程序开始。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="477">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2032633831"><img alt="李明_平淡" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(5)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2032633831">李明_平淡</a></span>
+      <span class="time">2013-09-16</span>
+    </div>
+    <div class="comment_content"><p>看了博主文章，感觉很棒。我们也打算使用内存缓存。查找资料并测验、预研等，整个很久时间了，一直没有正式使用。主要是有2个问题，一直未能很好的想到办法。一个是，对于大量的数据的缓存。比如单表find all。比如数据有10-100万条。这样数据要做3级查找。数据的id本身还需要分成多页存储在缓存中，然后这多页的缓冲key还需要一个缓存存储。实际做了一个测试，数据表记录800条，循环30次，在虚拟机中，数据库本身查询整个只需要5秒，而使用这种方式的缓存花费了25秒，还没有对查询缓存数据不存在的情况，需要单独到数据库中查找数据。这种情况下，效率不高。<br>
+另外一个就是复杂的SQL语句查询，关联表查询可能没有主键ID，还不能使用主键ID的方式做分页。另外关联表查询在更新数据时，需要经常的清理缓存数据，在缓存的利用率不高。当然使用目前的拆分SQL语句，通过N+1方式就不存在这种情况了。<br>
+目前发现，缓存只要在通过id或者id list方式查找上存在极大优势，其他方面我还没有找到更好的办法。  请教下，是否有更好的办法解决该问题？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="435">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2785161230"><img alt="清晨吼于林" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(6)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2785161230">清晨吼于林</a></span>
+      <span class="time">2013-07-24</span>
+    </div>
+    <div class="comment_content"><p>不错，学习下</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="426">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/3340016440"><img alt="岁月无声_91184" src="./Web应用的缓存设计模式 - robbin的自言自语_files/0"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/3340016440">岁月无声_91184</a></span>
+      <span class="time">2013-07-10</span>
+    </div>
+    <div class="comment_content"><p>如果发出许多条sql的话,那连接呢?虽然有连接池,可是高并发的情况下那些连接还是不太够,如果n=一个非常大的数,比如200,缓存能命中80%,还是要发出40条sql,也就是说要占用40个连接.不知道tcp连接的成本 要不要考虑在内?</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="411">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2014863777"><img alt="sharkbobo" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(7)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2014863777">sharkbobo</a></span>
+      <span class="time">2013-06-17</span>
+    </div>
+    <div class="comment_content"><p>写一致性缓存里面的技巧，真是巧啊。呵呵</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="406">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2406851264"><img alt="人人都可以是食神" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(8)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2406851264">人人都可以是食神</a></span>
+      <span class="time">2013-06-06</span>
+    </div>
+    <div class="comment_content"><p>深有体会：）</p>
+
+<p>一开始，我是用各种表连接来减少sql语句，配合cache提高性能，但是：同一个数据可能会在cache里同时存在多份，导致了更新和操作缓存比较麻烦。</p>
+
+<p>偶然之间，我拆开了连接，发现问题变得简单了！后来我不断把表连接换成了N+1的模式，发现更新和操作缓存变得非常简单，而且最重要的是缓存利用率提高了，消除了重复。</p>
+
+<p>再后来，我看了robbin老大的文章，更加确信这是一套行之有效的方法。</p>
+
+<p>这个思路被用来设计我的一个开源BBS：JFinal-BBS。</p>
+
+<p>^O^</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="405">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/315871081"><img alt="Rande_" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(9)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/315871081">Rande_</a></span>
+      <span class="time">2013-06-03</span>
+    </div>
+    <div class="comment_content"><p>谢谢了！花了两小时去细读，对cache的理解清晰多了，正好新项目可以实践一下～</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="403">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/zgia"><img alt="半个馒头大师" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(10)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/zgia">半个馒头大师</a></span>
+      <span class="time">2013-05-31</span>
+    </div>
+    <div class="comment_content"><blockquote>
+<p>夏小小花 评论:<br>
+用id和update时间作为缓存的key，确实开拓了眼界，同时也在设想项目中的一些场景是否能替换，因此发现了一个疑问，如下：<br>
+"因此每当文章内容被更新，缓存的页面内容的key就会改变，应用程序下次访问文章页面的时候，缓存就会失效，"<br>
+应用程序访问文章页面的时候，是通过id跟update时间来获取的，那么update时间也是需要从数据库中获取吧，那么其实缓存的就只有blog_contents的content内容，而blog还是需要每次都去blogs获取的吧？<br>
+应该是这样，单表取最新的20篇，效率很高。<br>
+或者可以设计一个queue类，缓存最新的20篇blog，就不用去读取数据库了。</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="379">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2218130867"><img alt="大志2020" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(11)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2218130867">大志2020</a></span>
+      <span class="time">2013-05-14</span>
+    </div>
+    <div class="comment_content"><p>可以尝试使用memcache的cas操作，是一种乐观锁机制。</p>
+
+<blockquote>
+<p>robbin 评论:<br>
+乐观锁当然是在应用端实现的了。具体的实现原理你可以看看乐观锁相关的资料。</p>
+
+<blockquote>
+<p>czcz1k 评论:<br>
+你提到的cache上加乐观锁是在memcache上有这样的功能，还是在应用服务器上做锁？如果是应用服务器，那负载均衡多台应用服务器之后如何锁？</p>
+
+<blockquote>
+<p>robbin 评论:<br>
+这个问题很好！ 分两种场景：</p>
+
+<ul>
+<li>对数据一致性要求不高，例如点击计数，多几个少几个没关系，可以直接忽视</li>
+<li>对数据一致性要求很严格，那就需要做一些额外的编程工作，在cache上添加乐观锁来保障。</li>
+</ul>
+
+<blockquote>
+<p>Krq_Tiger 评论:<br>
+我在项目中也使用过根据更新时间做为Key来让缓存自动失效的方法。<br>
+不过对于写入缓存的时候，如果并发量大的话，对某个文章的喜欢次数就会存在更新丢失的问题，比如文章1特别热门，3个人并发点击喜欢，那么从分布式缓存拿到应用服务器内存中更新对象就会导致3个请求其实更新的是不同的3个对象，没有进行累加。</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="376">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2218130867"><img alt="大志2020" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(11)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2218130867">大志2020</a></span>
+      <span class="time">2013-05-14</span>
+    </div>
+    <div class="comment_content"><p>你好，对于验证码的问题我有不同的看法，对于遇到暴力注册和登录，服务端对接收到大量的无效请求，如果发送邮件，会大量消耗服务器资源，封IP的做法在这个时候比较适用。</p>
+
+<blockquote>
+<p>郁也风 评论:<br>
+很好的总结文章啊。不过有两个地方我的思路有所不同。</p>
+
+<p>一个是那个缓存tag，会有一个问题，如果修改了tag的话会有问题，我觉得还是应该将tag缓存起来，数据库相应的blog里面只记录关联tag的id。</p>
+
+<p>另一个就是多次尝试登陆问题，5次就封ip可能有点暴力了。我的思路是5次之后提供个验证码，而这个验证码是通过给一个邮箱发邮件获得，这样还可以解决验证码太扭曲看不清的问题</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="350">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/zaqzyy"><img alt="雪峰_2012" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(12)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/zaqzyy">雪峰_2012</a></span>
+      <span class="time">2013-05-13</span>
+    </div>
+    <div class="comment_content"><p>赞同，楼主的 ORM Cache 称之为 DAL Fx Cache 更合适。<br>
+一般 DAL 包括：DAL + DAL Fx，DAL Fx 可能包含 ORM，也可能不包含 ORM（如：Enterprise Library）。</p>
+
+<blockquote>
+<p>三断笛1 评论:<br>
+博主介绍的几种优化和缓存方案很好很精彩。<br>
+但是ORM那段我有不同的看法。<br>
+首先我觉得ORM的主要作用是让开发人员用熟悉的面向对象方式理解数据库。<br>
+文中提到的n+1方式访问数据库，和后面的缓存技巧和ORM实质关系不大，脱离的ORM，这些技巧依然可以使用，尤其象n+1方式拆分表间连接访问大数据表——不管有没有ORM都应该这样做，而且有效——但ORM是不得不这样做，欠缺灵活性。</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="320">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/someok"><img alt="郁也风" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(13)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/someok">郁也风</a></span>
+      <span class="time">2013-04-26</span>
+    </div>
+    <div class="comment_content"><p>很好的总结文章啊。不过有两个地方我的思路有所不同。</p>
+
+<p>一个是那个缓存tag，会有一个问题，如果修改了tag的话会有问题，我觉得还是应该将tag缓存起来，数据库相应的blog里面只记录关联tag的id。</p>
+
+<p>另一个就是多次尝试登陆问题，5次就封ip可能有点暴力了。我的思路是5次之后提供个验证码，而这个验证码是通过给一个邮箱发邮件获得，这样还可以解决验证码太扭曲看不清的问题</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="317">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/superfofo"><img alt="夏小小花" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(14)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/superfofo">夏小小花</a></span>
+      <span class="time">2013-04-26</span>
+    </div>
+    <div class="comment_content"><p>用id和update时间作为缓存的key，确实开拓了眼界，同时也在设想项目中的一些场景是否能替换，因此发现了一个疑问，如下：<br>
+"因此每当文章内容被更新，缓存的页面内容的key就会改变，应用程序下次访问文章页面的时候，缓存就会失效，"<br>
+应用程序访问文章页面的时候，是通过id跟update时间来获取的，那么update时间也是需要从数据库中获取吧，那么其实缓存的就只有blog_contents的content内容，而blog还是需要每次都去blogs获取的吧？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="297">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1802331695"><img alt="Cadina有节操" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(15)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1802331695">Cadina有节操</a></span>
+      <span class="time">2013-04-09</span>
+    </div>
+    <div class="comment_content"><p>n+1那块没有看懂，为什么要这么做？<br>
+为什么不能 select * from table_name where id in (...) ？<br>
+即使要利用缓存，也可以先批量从缓存中取，没有取到的再一条SQL用IN查询搞定。<br>
+反正这块做到ORM层，也不会增加业务逻辑代码的复杂性。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="287">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/aphantee"><img alt="Aphantee" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(16)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/aphantee">Aphantee</a></span>
+      <span class="time">2013-04-05</span>
+    </div>
+    <div class="comment_content"><p>谢谢分享<br>
+在中文互联网能看到这么好的技术分享实在难得</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="211">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1080141367"><img alt="靠谱的IT民工" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(17)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1080141367">靠谱的IT民工</a></span>
+      <span class="time">2013-03-13</span>
+    </div>
+    <div class="comment_content"><p>n+1在缓存模式下是否更高效，还是得看具体的SQL和数据库。比如Oracle内部已经有非常完善的cache机制，看起来有很多join的一条SQL也许并不会产生I/O。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="197">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/sk4u"><img alt="sk4u" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(18)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/sk4u">sk4u</a></span>
+      <span class="time">2013-03-11</span>
+    </div>
+    <div class="comment_content"><p>介绍的几种缓存方式平常都是用过，但却没有像博主这样系统的总结过，如果一时问我肯定答不上来了。博主写的很精彩！</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="189">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/lyx0911"><img alt="lyx0911" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(19)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/lyx0911">lyx0911</a></span>
+      <span class="time">2013-03-09</span>
+    </div>
+    <div class="comment_content"><p>不知道老大用的是何种缓存，如果用memcached，如何解决不清空缓存的情况下，把数据插入旧的缓存里？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="188">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/121901634"><img alt="流水理鱼" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(20)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/121901634">流水理鱼</a></span>
+      <span class="time">2013-03-09</span>
+    </div>
+    <div class="comment_content"><p>前来学习干货~</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="186">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>乐观锁当然是在应用端实现的了。具体的实现原理你可以看看乐观锁相关的资料。</p>
+
+<blockquote>
+<p>czcz1k 评论:<br>
+你提到的cache上加乐观锁是在memcache上有这样的功能，还是在应用服务器上做锁？如果是应用服务器，那负载均衡多台应用服务器之后如何锁？</p>
+
+<blockquote>
+<p>robbin 评论:<br>
+这个问题很好！ 分两种场景：</p>
+
+<ul>
+<li>对数据一致性要求不高，例如点击计数，多几个少几个没关系，可以直接忽视</li>
+<li>对数据一致性要求很严格，那就需要做一些额外的编程工作，在cache上添加乐观锁来保障。</li>
+</ul>
+
+<blockquote>
+<p>Krq_Tiger 评论:<br>
+我在项目中也使用过根据更新时间做为Key来让缓存自动失效的方法。<br>
+不过对于写入缓存的时候，如果并发量大的话，对某个文章的喜欢次数就会存在更新丢失的问题，比如文章1特别热门，3个人并发点击喜欢，那么从分布式缓存拿到应用服务器内存中更新对象就会导致3个请求其实更新的是不同的3个对象，没有进行累加。</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="185">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>会，这是表的物理存储位置决定的，不是设计缺陷。</p>
+
+<blockquote>
+<p>上吊de鱼 评论:<br>
+如果content字段放在blogs表中，查询blogs表时不查询content字段，也不把content当作where条件，数据库表扫描还会造成较多的磁盘IO吗？如果是的话这是不是数据库的设计缺陷？</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="184">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>不需要，我们写的 second_level_cache插件会搞定的。</p>
+
+<blockquote>
+<p>我是陈顺 评论:<br>
+请教robbin，文章内容已id+update值作为key，内容更新时，可以不用更新缓存，自动失效就行了。<br>
+如果是文章标题更新了，还是要单独更新缓存咯？</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="183">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/207999139"><img alt="我是陈顺" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(21)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/207999139">我是陈顺</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>请教robbin，文章内容已id+update值作为key，内容更新时，可以不用更新缓存，自动失效就行了。<br>
+如果是文章标题更新了，还是要单独更新缓存咯？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="182">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/tianyl1984"><img alt="上吊de鱼" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(22)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/tianyl1984">上吊de鱼</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>如果content字段放在blogs表中，查询blogs表时不查询content字段，也不把content当作where条件，数据库表扫描还会造成较多的磁盘IO吗？如果是的话这是不是数据库的设计缺陷？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="178">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/3217100794"><img alt="czcz1k" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(23)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/3217100794">czcz1k</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>你提到的cache上加乐观锁是在memcache上有这样的功能，还是在应用服务器上做锁？如果是应用服务器，那负载均衡多台应用服务器之后如何锁？</p>
+
+<blockquote>
+<p>robbin 评论:<br>
+这个问题很好！ 分两种场景：</p>
+
+<ul>
+<li>对数据一致性要求不高，例如点击计数，多几个少几个没关系，可以直接忽视</li>
+<li>对数据一致性要求很严格，那就需要做一些额外的编程工作，在cache上添加乐观锁来保障。</li>
+</ul>
+
+<blockquote>
+<p>Krq_Tiger 评论:<br>
+我在项目中也使用过根据更新时间做为Key来让缓存自动失效的方法。<br>
+不过对于写入缓存的时候，如果并发量大的话，对某个文章的喜欢次数就会存在更新丢失的问题，比如文章1特别热门，3个人并发点击喜欢，那么从分布式缓存拿到应用服务器内存中更新对象就会导致3个请求其实更新的是不同的3个对象，没有进行累加。</p>
+</blockquote>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="176">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/xiegengcai"><img alt="谢庚才" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(24)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/xiegengcai">谢庚才</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>不错，看来以后得有效利用缓存</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="170">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>Oracle你可以用clob字段，不要用varchar2。</p>
+
+<blockquote>
+<p>王永山 评论:<br>
+Robbin，我看了你的blogs和blog_contents表设计，要求一个文章的内容在blog_contents表中只有一条记录（即：一篇文章内容的长度不能超过mediumtext的范围），而我的文章内容很长，使用oracle存储，我也采用了查分表blog_summary, blog_contents，由于oracle的varchar2最大4000，所以对于一篇超长文章我采用拆分在blog_contents表中存放多行来解决：<br>
+blog_contents表结构{<br>
+  id  #主键<br>
+  blog_id  #文章id<br>
+  content  #文章内容片断<br>
+  pageorder #内容片断的先后顺序<br>
+}<br>
+这样当获取一篇文章内容时，这样的：SELECT* FROM blog_contents WHERE blog_id = #blog_id#  ORDER BY pageorder ASC<br>
+如果要想让我这样的表存储结构加入缓冲，只需要对 blog_id 创建索引就可以了吗？？</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="169">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1869763404"><img alt="王永山" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(25)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1869763404">王永山</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>Robbin，我看了你的blogs和blog_contents表设计，要求一个文章的内容在blog_contents表中只有一条记录（即：一篇文章内容的长度不能超过mediumtext的范围），而我的文章内容很长，使用oracle存储，我也采用了查分表blog_summary, blog_contents，由于oracle的varchar2最大4000，所以对于一篇超长文章我采用拆分在blog_contents表中存放多行来解决：<br>
+blog_contents表结构{<br>
+  id  #主键<br>
+  blog_id  #文章id<br>
+  content  #文章内容片断<br>
+  pageorder #内容片断的先后顺序<br>
+}<br>
+这样当获取一篇文章内容时，这样的：SELECT* FROM blog_contents WHERE blog_id = #blog_id#  ORDER BY pageorder ASC<br>
+如果要想让我这样的表存储结构加入缓冲，只需要对 blog_id 创建索引就可以了吗？？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="168">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1627342023"><img alt="维护世界和平的喷哥" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(26)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1627342023">维护世界和平的喷哥</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>看之前先留个记号，大牛的东西总要消化好久。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="163">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>这个问题很好！ 分两种场景：</p>
+
+<ul>
+<li>对数据一致性要求不高，例如点击计数，多几个少几个没关系，可以直接忽视</li>
+<li>对数据一致性要求很严格，那就需要做一些额外的编程工作，在cache上添加乐观锁来保障。</li>
+</ul>
+
+<blockquote>
+<p>Krq_Tiger 评论:<br>
+我在项目中也使用过根据更新时间做为Key来让缓存自动失效的方法。<br>
+不过对于写入缓存的时候，如果并发量大的话，对某个文章的喜欢次数就会存在更新丢失的问题，比如文章1特别热门，3个人并发点击喜欢，那么从分布式缓存拿到应用服务器内存中更新对象就会导致3个请求其实更新的是不同的3个对象，没有进行累加。</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="162">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>这个不绝对，要看具体的SQL语句，但是拆开成n+1可以大量利用缓存，性能优势就非常明显了。</p>
+
+<blockquote>
+<p>godblessfree 评论:<br>
+使用单sql替代join来避免table scan? 如果每个table join的key都有index, execute plan合理的话，肯定比多次roundtrip要好啊，没用过mysql,但是基本的东西rdbms是相通的.</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="161">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>对memcached性能没有影响，很多使用场景下，大量编码删除缓存可能会造成代码复杂度上升，这是应该尽量避免的操作。</p>
+
+<blockquote>
+<p>陆时磊 评论:<br>
+学习了！！！<br>
+文章内容已id+update值作为key，文章修改后这个缓存数据没有被删除，而是等待memcached来删除，这样的数据大量存在对于memcached的性能会大的有影响么？还是不如直接使用文章id作为key，这样更新或删除文章后都对缓存进行删除</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="160">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>2台，总共用了12GB内存做缓存，其实热点数据量没有那么大，历史数据被访问的频率是很低的。</p>
+
+<blockquote>
+<p>kenshin54 评论:<br>
+请教robbin，对于那个上千万级数据的产品，memcached需要多大内存，需要几台memcached的服务器？</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="159">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/tallrain"><img alt="醉舟V" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(27)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/tallrain">醉舟V</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>就COLUMN拆分补充一点，将常读和常写的字段拆分，可以减少写操作造成的锁表。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="158">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1697604692"><img alt="陆时磊" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(28)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1697604692">陆时磊</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>学习了！！！<br>
+文章内容已id+update值作为key，文章修改后这个缓存数据没有被删除，而是等待memcached来删除，这样的数据大量存在对于memcached的性能会大的有影响么？还是不如直接使用文章id作为key，这样更新或删除文章后都对缓存进行删除</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="154">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/maddemon"><img alt="子君_V" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(29)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/maddemon">子君_V</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>内容是不是单独服务器更好些</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="153">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/medal"><img alt="medalhuang" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(30)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/medal">medalhuang</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>很精彩！<br>
+1. 计数类的问题也可以用一些key-value的NoSql来解决，比如tt<br>
+2. clean_cache那里放到observer里面是不是更好呢？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="151">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/lishunli"><img alt="李顺利Me" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(31)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/lishunli">李顺利Me</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>每次读robbin的文章都有很多收获，确实，缓存的过期处理往往是比较麻烦的事情。每次在设计的时候，对于性能有一定要求地地方，肯定是要考虑缓存的，可以说，缓存对于性能的提升起着很关键的作用。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="148">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/sjw1105"><img alt="JervyShi" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(32)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/sjw1105">JervyShi</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>项目中也用到很多n+1的模式，之前对此理解不是很通透，看完robbin的文章之后有种茅塞顿开的感觉！很精彩！</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="146">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/37661974"><img alt="我是大菠萝" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(33)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/37661974">我是大菠萝</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>写入缓存是否也要持久化？否则缓存进程一旦挂掉那部分没有累计到n的数据也就没有机会进入数据库了?</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="145">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/kenshin54"><img alt="kenshin54" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(34)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/kenshin54">kenshin54</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>请教robbin，对于那个上千万级数据的产品，memcached需要多大内存，需要几台memcached的服务器？</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="143">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/dotey"><img alt="宝玉xp" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(35)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/dotey">宝玉xp</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>写的挺好的，所以我也顺风写了一点，思路略有不同，但大体差不多：<a href="http://www.cnblogs.com/dotey/archive/2013/03/08/2949153.html">http://www.cnblogs.com/dotey/archive/2013/03/08/2949153.html</a></p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="142">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2323511860"><img alt="godblessfree" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(36)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/2323511860">godblessfree</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>使用单sql替代join来避免table scan? 如果每个table join的key都有index, execute plan合理的话，肯定比多次roundtrip要好啊，没用过mysql,但是基本的东西rdbms是相通的.</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="141">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/xmuzyq"><img alt="Krq_Tiger" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(37)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/xmuzyq">Krq_Tiger</a></span>
+      <span class="time">2013-03-08</span>
+    </div>
+    <div class="comment_content"><p>我在项目中也使用过根据更新时间做为Key来让缓存自动失效的方法。<br>
+不过对于写入缓存的时候，如果并发量大的话，对某个文章的喜欢次数就会存在更新丢失的问题，比如文章1特别热门，3个人并发点击喜欢，那么从分布式缓存拿到应用服务器内存中更新对象就会导致3个请求其实更新的是不同的3个对象，没有进行累加。</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="136">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/333195222"><img alt="呃完自己呃人地" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(38)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/333195222">呃完自己呃人地</a></span>
+      <span class="time">2013-03-07</span>
+    </div>
+    <div class="comment_content"><p>robbin如果再多一个回到最顶部的按钮就好了</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="135">
+  <div class="user_img"><a href="http://robbinfan.com/"><img alt="robbin" src="./Web应用的缓存设计模式 - robbin的自言自语_files/logo.png"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a href="http://robbinfan.com/">robbin</a></span>
+      <span class="time">2013-03-07</span>
+    </div>
+    <div class="comment_content"><p>所有的缓存设计模式其实都是通用的，但是在ORM框架下，可以实现的很优雅，很简洁。ORM本身也开放了SQL接口，也可以强制按照传统的方式编程，并不一定必须使用n+1，也可以强制join的。</p>
+
+<blockquote>
+<p>三断笛1 评论:<br>
+博主介绍的几种优化和缓存方案很好很精彩。<br>
+但是ORM那段我有不同的看法。<br>
+首先我觉得ORM的主要作用是让开发人员用熟悉的面向对象方式理解数据库。<br>
+文中提到的n+1方式访问数据库，和后面的缓存技巧和ORM实质关系不大，脱离的ORM，这些技巧依然可以使用，尤其象n+1方式拆分表间连接访问大数据表——不管有没有ORM都应该这样做，而且有效——但ORM是不得不这样做，欠缺灵活性。</p>
+</blockquote>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="133">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/sanlua"><img alt="煎蛋不放盐" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(39)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/sanlua">煎蛋不放盐</a></span>
+      <span class="time">2013-03-07</span>
+    </div>
+    <div class="comment_content"><p>很精彩</p>
+</div>
+  </div>
+</li>
+
+<li class="clearfix" id="132">
+  <div class="user_img"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1457210435"><img alt="三断笛1" src="./Web应用的缓存设计模式 - robbin的自言自语_files/1(40)"></a></div>
+  <div class="cot_con">
+ 		<div class="info">
+      <span class="user_name"><a target="_blank" rel="nofollow" href="http://weibo.com/u/1457210435">三断笛1</a></span>
+      <span class="time">2013-03-07</span>
+    </div>
+    <div class="comment_content"><p>博主介绍的几种优化和缓存方案很好很精彩。<br>
+但是ORM那段我有不同的看法。<br>
+首先我觉得ORM的主要作用是让开发人员用熟悉的面向对象方式理解数据库。<br>
+文中提到的n+1方式访问数据库，和后面的缓存技巧和ORM实质关系不大，脱离的ORM，这些技巧依然可以使用，尤其象n+1方式拆分表间连接访问大数据表——不管有没有ORM都应该这样做，而且有效——但ORM是不得不这样做，欠缺灵活性。</p>
+</div>
+  </div>
+</li>
+
+        </ul>
+      </div>
+      <a name="comments"></a>
+      <div class="relative">
+        <div class="editor_switcher">
+          <ul>
+            <li class="current"><a id="publish_comment" href="http://robbinfan.com/blog/38/orm-cache-sumup#">发表评论</a></li>
+            <li><a id="preview_comment" href="http://robbinfan.com/blog/38/orm-cache-sumup#">预览评论</a></li>
+          </ul>
+          <span style="float:right;">[<a href="http://wowubuntu.com/markdown/" target="_blank">评论可以使用Markdown格式</a>]</span>
+        </div>
+<form method="post" action="http://robbinfan.com/blog/38/comments" protect_from_csrf="true" accept-charset="UTF-8" data-remote="true"><input value="097ec7f5b3eb01d6f449a149b99a4e17" name="authenticity_token" type="hidden">          <textarea class="comment" id="blog_comment_content" name="blog_comment[content]" rows="" cols=""></textarea>
+          <div id="comment-error-info"></div>
+          <div id="comment_preview" class="con comment"></div>
+          <input class="comment_btn" value="" type="submit">
+</form>        <div class="box" style="">
+          <button class="close"></button>
+          <p>我想知道与谁交流思想，请用微博登录留言。</p>
+          <button class="sina_btn"></button>
+        </div><!-- box -->
+      </div><!-- relative -->
+      
+    </div><!-- comment -->
+     
+  </div><!-- con -->
+  
+</div><!-- left -->
+
+<div class="right">
+  
+<h3>肉饼铺子微信号</h3>
+<div class="tag">
+	<img alt="肉饼铺子微信订阅号" title="肉饼铺子微信订阅号" src="./Web应用的缓存设计模式 - robbin的自言自语_files/robbin_foods_shop.jpg">
+</div>
+
+<h3>文章分类</h3>
+<div class="tag">
+  <a href="http://robbinfan.com/tag/weixin">weixin<span>23</span></a>
+  <a href="http://robbinfan.com/tag/ruby">ruby<span>11</span></a>
+  <a href="http://robbinfan.com/tag/industry">industry<span>9</span></a>
+  <a href="http://robbinfan.com/tag/management">management<span>5</span></a>
+  <a href="http://robbinfan.com/tag/life">life<span>5</span></a>
+  <a href="http://robbinfan.com/tag/product">product<span>4</span></a>
+  <a href="http://robbinfan.com/tag/entrepreneur">entrepreneur<span>3</span></a>
+  <a href="http://robbinfan.com/tag/tech">tech<span>3</span></a>
+  <a href="http://robbinfan.com/tag/linux">linux<span>3</span></a>
+</div>
+  
+<h3>热门文章</h3>
+<div class="hot_blog">
+  <a href="http://robbinfan.com/blog/29/my-new-website">新的个人网站开张 robbinfan.com</a>
+  <a href="./Web应用的缓存设计模式 - robbin的自言自语_files/Web应用的缓存设计模式 - robbin的自言自语.html">Web应用的缓存设计模式</a>
+  <a href="http://robbinfan.com/blog/31/why-love-shanghai">我为何喜欢上海不喜欢北京</a>
+  <a href="http://robbinfan.com/blog/40/ruby-off-rails">Ruby社区应该去Rails化了</a>
+  <a href="http://robbinfan.com/blog/28/about-robbin">范凯的自我介绍</a>
+</div>
+
+<h3>最新评论</h3>
+<ul class="comment">
+	<li>
+    <div>请教下博主：关于点击数循环写入库的疑问，如果我写入memcached,%10=0插入mysql,如果在没有插入库之前。key被flush掉，或者被LRU算法淘汰点，是不是数据丢失了？...</div>
+  	吊儿郎当郎丶评论了<a href="http://robbinfan.com/blog/38/orm-cache-sumup#comments">Web应用的缓存设计模式</a>
+  </li>
+	<li>
+    <div>做了个搜索给大家开开眼界啊
+http://so.yunxunmi.com
+
+支持手机和PC，完全采用html5开发的哦...</div>
+  	云寻觅评论了<a href="http://robbinfan.com/blog/60#comments">大佬怎么抓才能不死？</a>
+  </li>
+	<li>
+    <div>云搜 http://so.yunxunmi.com/ 让搜索更简单 采用html5完全支持手机和PC...</div>
+  	云寻觅评论了<a href="http://robbinfan.com/blog/55#comments">从大佬一抓就死说起</a>
+  </li>
+	<li>
+    <div>这不就是ruby元编程里面的一个用法吗？...</div>
+  	FTAndy评论了<a href="http://robbinfan.com/blog/2/ruby-dsl-example#comments">ruby声明式语法的实现技巧</a>
+  </li>
+	<li>
+    <div>讲的很好，只是我只是个普通的90后程序员，对创业没有什么概念...</div>
+  	梦想自由者2011评论了<a href="http://robbinfan.com/blog/77#comments">90后创业者：走向新鲜还是腐烂？</a>
+  </li>
+</ul>
+
+
+<div class="rss clearfix">
+  <a href="http://robbinfan.com/rss">RSS订阅</a>
+</div>
+
+</div><!-- right -->
+
+
+    </div><!-- content -->
+    
+    <div class="footer">
+    	<a href="http://weibo.com/robbinfan" class="weibo">Weibo</a>
+      <a href="https://github.com/robbin" class="github">Github</a>      
+      <a href="mailto:fankai@gmail.com" class="mail">Email</a>
+      <div class="powered-by">
+        <a href="http://robbinfan.com/" title="robbin的自言自语">Powered by robbin</a>&nbsp;
+				<a href="http://www.elvenui.com/" title="Elvenui" target="_blank">Design by Elvenui</a>
+      </div>
+    </div><!-- footer -->
+    <script src="./Web应用的缓存设计模式 - robbin的自言自语_files/jquery.js" type="text/javascript"></script>
+<script src="./Web应用的缓存设计模式 - robbin的自言自语_files/jquery-ujs.js" type="text/javascript"></script>
+<script src="./Web应用的缓存设计模式 - robbin的自言自语_files/application.js" type="text/javascript"></script>
+      <script src="./Web应用的缓存设计模式 - robbin的自言自语_files/highlight.min.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(function(){
+    // hightlight code
+    hljs.initHighlightingOnLoad();
+
+    // response close button of weibo login div
+    $('button.close').click(function() {
+      $('div.box').hide();
+    });
+
+    // response sina login button
+    $('button.sina_btn').click(function(){
+      var width=Math.round((window.screen.width-800)/2);
+      var height=Math.round((window.screen.height-600)/2);
+      window.open('/weibo_login/?quick_login=1', 'weibo_third_part_authentication', 'height=300px, width=400px, top='+height+',left='+width+', scrollbars=no, resizable=no, status=no, resizable=no, menubar=no');
+    });
+    
+    // validate empty comment
+    $('input.comment_btn').click(function(){
+      if ($('textarea#blog_comment_content').val().length < 3) {
+        $('div#comment-error-info').html('评论太少，多写点').show().fadeOut(3000);
+        return false;
+      }
+    });
+    
+    // preview comments
+    $('a#publish_comment').click(function(){
+      $('a#publish_comment').parent().addClass('current');
+      $('a#preview_comment').parent().removeClass('current');
+      $('div#comment_preview').hide();
+      $('textarea#blog_comment_content').show();
+      return false;
+    });
+    $('a#preview_comment').click(function(){
+      $.post('/comment/preview', {term: $('textarea#blog_comment_content').val()}, function(data){
+        $('a#preview_comment').parent().addClass('current');
+        $('a#publish_comment').parent().removeClass('current');
+        $('textarea#blog_comment_content').hide();
+        $('div#comment_preview').html(data);
+        $('div#comment_preview').show();
+      });
+      return false;
+    });
+
+    // quote comment
+    $('div.cot_con a.quote_comment').click(function(){
+      var commentBlock = $(this).closest('li');
+      $.get('/comment/quote', {id: commentBlock.attr('id')}, function(data){
+        var body = $('textarea#blog_comment_content').val() + data;
+        $('textarea#blog_comment_content').val(body);
+        $('textarea#blog_comment_content').focus();
+      });
+      return false;
+    });
+  });
+  </script>
+
+    <script type="text/javascript">
+      $('form#cse-search-box button#search-button').click(function(){
+      	window.open('http://guge.io/#q=' + $('form#cse-search-box input#search-box').val() + '+site:robbinfan.com');
+      	return false;
+      });
+    </script>
+  
+
+</body></html>

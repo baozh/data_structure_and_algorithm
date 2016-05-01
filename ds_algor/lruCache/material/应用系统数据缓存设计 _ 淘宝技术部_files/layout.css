@@ -1,0 +1,272 @@
+/* Table of Contents
+==================================================
+	#Site Styles
+	#Page Styles
+	#Media Queries
+	#Font-Face */
+	
+/* #Site Styles
+================================================== */
+
+#content {
+	margin: 0 10px;
+}
+
+body.left-sidebar #content {
+	float: right;
+}
+
+body.left-sidebar #sidebar {
+	float: left;
+}
+
+body.left-sidebar #sidebar ul {
+	margin: 0 30px 20px 0;
+}
+
+body.no-sidebar #content {
+	width: 900px;
+}
+
+body.no-sidebar #sidebar {
+	display: none;
+}
+
+/* @group Navigation */
+
+#navigation {
+	margin: 0 0 20px 0;
+	width: 100%;
+	clear: both;
+}
+
+#navigation ul,
+#navigation ul li {
+	float: left;
+	margin: 0;
+	padding: 0;
+}
+
+#navigation select {display: none;}
+
+/* @end */
+
+#footer {
+	clear: both;
+}
+
+/* #Page Styles
+================================================== */
+
+/* Layout Shortcodes */
+.full-width {width:960px; height:auto; overflow:hidden}
+
+.one_half { width: 48%; }
+.one_third { width: 30.66%; }
+.two_thirds { width: 65.33%; }
+.one_fourth { width: 22%; }
+.three_fourths { width: 74%; }
+.one_fifth { width: 16.8%; }
+.two_fifth { width: 37.6%; }
+.three_fifth { width: 58.4%; }
+.four_fifth { width: 67.2%; }
+.one_sixth { width: 13.33%; }
+.five_sixth { width: 82.67%; }
+
+.one_half,
+.one_third,
+.two_thirds,
+.three_fourths,
+.one_fourth,
+.one_fifth,
+.two_fifth,
+.three_fifth,
+.four_fifth,
+.one_sixth,
+.five_sixth {
+	position: relative;
+	margin-right: 4%;
+	margin-bottom: 20px;
+	float: left;
+}
+
+
+.last {margin-right:0 !important;}
+
+
+/* #Media Queries
+================================================== */
+	
+	/* iPad Portrait/Browser */
+	@media only screen and (min-width: 768px) and (max-width: 959px) {
+	
+	#navigation ul {border-radius:0px;}
+	#navigation ul li a {font-size: .9em;padding: 10px 15px;}
+	#navigation ul {min-width: 700px;}
+	#sidebar .widget-container {margin-left: 0px;}
+	.resize {display: none;}
+	#respond textarea {width:430px;}	
+	#content {
+		width: 488px;
+		margin: 0 10px;
+	}
+	body.no-sidebar #content {
+		width: 728px;
+	}
+	}
+	
+	
+	/* Mobile/Browser */
+	@media only screen and (max-width: 767px) {
+
+	#wrap {}
+	#header .site-desc.text {font-size: 1.25em;}
+	
+	#header .menu,
+	#header .menu li,
+	#header .menu li a {
+	float: none;
+	display: block;
+	background: transparent;
+	border: none;
+	box-shadow:none;
+	-moz-box-shadow:none;
+	-webkit-box-shadow:none;
+	behavior:none;
+	}
+	
+	#header .menu {
+		padding: 2px 8px;
+		background: #FCFCFC;
+		border: 1px solid #E0E0E0;
+		-webkit-border-radius: 5px;
+		-moz-border-radius: 5px;
+		border-radius: 5px;
+	}
+	
+	#header .menu li a,
+	#header .menu li.active a {
+	background: transparent;
+	background-image: none;
+	}
+	
+	/* Initial reset and hide sublevels in mobile view */
+	
+	#header ul.sub-menu,
+	#header ul.sub-menu li,
+	#header ul.sub-menu li:hover,
+	#header ul.sub-menu li a,
+	#header ul.sub-menu li a:hover
+	{
+		position: relative;
+		left: 0;
+		top:0;
+		border:none;
+		background: none;
+		box-shadow: none;
+		height: auto;
+		background-image: none;
+	}
+	
+	/* Show on hover */
+	
+	#header .menu li:hover ul.sub-menu,
+	#header .menu li:hover ul.sub-menu li,
+	#header .menu li:hover ul.sub-menu li a {
+		margin-left: 5px;
+	}
+	
+	
+	#navigation ul {display: none;}
+	
+	#navigation .select-menu {
+		padding: 10px 0;
+	}
+	
+	#navigation select {
+		display: block;
+		width: 100%;
+		padding: 2px;
+	}
+	
+	#respond textarea {width:300px;}	
+	#respond input[type="text"] {width:200px;}	
+
+	
+	#wrap .products li,.products li.first,.products li.last {
+ 	float: left;
+ 	clear: both;
+	margin: 20px 0px 20px 0px;
+	width: 100%;
+	}
+	#breadcrumb {display: none;}
+	#sidebar {display: none;}
+	#sidebar .widget-container {margin-left: 0px;}
+	.full-width,
+	.one_half,
+	.one_third,
+	.two_thirds,
+	.three_fourths,
+	.one_fourth,
+	.one_fifth,
+	.two_fifth,
+	.three_fifth,
+	.four_fifth,
+	.one_sixth,
+	.five_sixth {width: 100%;}
+	.resize {display: none;}
+	
+	#header .inner { left:0; right:0; }
+	
+	#logo, 
+	#header-extras, 
+	#header .widget-content, 
+	#header .menu { float: none; }
+	
+	#logo { text-align: center; }
+	
+	#header-extras {padding: 0;}
+	#header .widget-content {margin-top: 15px;}
+	#header #searchform {width: 100%; float: none; margin-left: 0;}
+	
+	}
+	
+	/* Mobile Landscape/Browser */
+	@media only screen and (min-width: 480px) and (max-width: 767px) {
+	#content {
+		width: 400px;
+		margin: 0;
+	}
+	
+	}
+	
+	/* Anything smaller than standard 960 */
+	@media only screen and (max-width: 959px) {}
+	
+	/* iPad Portrait Only */
+	@media only screen and (min-width: 768px) and (max-width: 991px) and (max-device-width: 1000px) {}
+	
+	/* Mobile Only */
+	@media only screen and (max-width: 767px) and (max-device-width: 1000px) {}
+	
+	/* Mobile Landscape Only */
+	@media only screen and (min-width: 480px) and (max-width: 767px) and (max-device-width: 1000px) {}
+	
+
+/* #Font-Face
+================================================== */
+/* 	This is the proper syntax for an @font-face file 
+		Just create a "fonts" folder at the root, 
+		copy your FontName into code below and remove
+		comment brackets */
+		
+/*	@font-face {
+	    font-family: 'FontName';
+	    src: url('../fonts/FontName.eot');
+	    src: url('../fonts/FontName.eot?iefix') format('eot'),
+	         url('../fonts/FontName.woff') format('woff'),
+	         url('../fonts/FontName.ttf') format('truetype'),
+	         url('../fonts/FontName.svg#webfontZam02nTh') format('svg');
+	    font-weight: normal;
+	    font-style: normal; }
+*/

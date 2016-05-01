@@ -1,0 +1,590 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://opengraphprotocol.org/schema/" xmlns:fb="http://www.facebook.com/2008/fbml">
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+<title>File Not Found - Friendly Planet Travel</title>
+
+<link type="text/css" rel="stylesheet" href="/css/common.20150514.css" />
+
+<link type="text/css" rel="stylesheet" href="/css/layout.20150418.css" />
+
+<link type="image/x-icon" rel="Shortcut Icon" href="/favicon.ico" />
+
+<script type="text/javascript" src="//code.jquery.com/jquery-1.8.3.js"></script>
+
+<script type="text/javascript" src="/js/LAB.min.js"></script>
+<script type="text/javascript" src="/js/common.20150130.min.js"></script>
+<meta property="fb:admins" content="371853016" />
+<meta property="og:site_name" content="Friendly Planet Travel" />
+
+</head>
+
+<body>
+
+<!--googleoff: index-->
+<script type="text/javascript">
+checkFeatures();
+</script>
+
+  <div id="pageWrapper">
+    <a id="logo" href="/" title="Friendly Planet Travel (click for homepage)"><img src="/media/gallery/logo/logo-masthead.png" width="350" height="75" alt="Friendly Planet Travel" /></a>
+
+    <div id="searchWidget">
+      <form action="/search.html" id="gcsc-form">
+        <input type="text" name="q" value="" size="25" id="gcsc-input" placeholder="Search" />
+        <input type="submit" value="go" id="gcsc-submit" class="btn" />
+      </form>
+    </div>
+
+    <ul id="contactWidget">
+      <li class="phone">800-555-5765 <a rel="shadowbox;height=330;width=510" href="http://1.gravatar.com/inquiry.html?mode=call" target="_blank"><img src="/media/template/contact_widget/agent.png" width="25" height="33" alt="" border="0" /> <small>Mon&ndash;Fri&nbsp; 9:30&ndash;6:00 ET</small></a></li>
+      <li class="email"><a rel="shadowbox;height=640;width=540" href="http://1.gravatar.com/inquiry.html?mode=email" target="_blank"><img src="/media/gallery/icons/email-small.png" width="23" height="16" alt="Email" border="0" /> Email</a></li>
+    </ul>
+    <div id="topMenu">
+      <ul class="sf-menu">
+        <li>
+          <a href="/vacation-packages/regions.html">Destinations</a>
+<ul>
+  <li>
+    <a href="/vacation-packages/africa/">Africa</a>
+    <ul>
+      <li><a href="/vacation-packages/africa/botswana.html">Botswana</a></li>
+      <li><a href="/vacation-packages/africa/egypt.html">Egypt</a></li>
+      <li><a href="/vacation-packages/africa/kenya.html">Kenya</a></li>
+      <li><a href="/vacation-packages/africa/namibia.html">Namibia</a></li>
+      <li><a href="/vacation-packages/africa/south-africa.html">South Africa</a></li>
+      <li><a href="/vacation-packages/africa/tanzania.html">Tanzania</a></li>
+      <li><a href="/vacation-packages/africa/zimbabwe.html">Zimbabwe</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/asia/">Asia</a>
+    <ul>
+      <li><a href="/vacation-packages/asia/bhutan.html">Bhutan</a></li>
+      <li><a href="/vacation-packages/asia/borneo.html">Borneo</a></li>
+      <li><a href="/vacation-packages/asia/cambodia.html">Cambodia</a></li>
+      <li><a href="/vacation-packages/asia/china.html">China</a></li>
+      <li><a href="/vacation-packages/asia/india.html">India</a></li>
+      <li><a href="/vacation-packages/asia/japan.html">Japan</a></li>
+      <li><a href="/vacation-packages/asia/malaysia.html">Malaysia</a></li>
+      <li><a href="/vacation-packages/asia/nepal.html">Nepal</a></li>
+      <li><a href="/vacation-packages/asia/thailand.html">Thailand</a></li>
+      <li><a href="/vacation-packages/asia/tibet.html">Tibet</a></li>
+      <li><a href="/vacation-packages/asia/vietnam.html">Vietnam</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/caribbean/">Caribbean</a>
+    <ul>
+      <li><a href="/vacation-packages/caribbean/cuba.html">Cuba</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/central-america/">Central America</a>
+    <ul>
+      <li><a href="/vacation-packages/central-america/costa-rica.html">Costa Rica</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/europe/">Europe</a>
+    <ul>
+      <li><a href="/vacation-packages/europe/austria.html">Austria</a></li>
+      <li><a href="/vacation-packages/europe/croatia.html">Croatia</a></li>
+      <li><a href="/vacation-packages/europe/czech-republic.html">Czech Republic</a></li>
+      <li><a href="/vacation-packages/europe/england.html">England</a></li>
+      <li><a href="/vacation-packages/europe/france.html">France</a></li>
+      <li><a href="/vacation-packages/europe/germany.html">Germany</a></li>
+      <li><a href="/vacation-packages/mediterranean/greece.html">Greece</a></li>
+      <li><a href="/vacation-packages/europe/hungary.html">Hungary</a></li>
+      <li><a href="/vacation-packages/europe/iceland.html">Iceland</a></li>
+      <li><a href="/vacation-packages/europe/ireland.html">Ireland</a></li>
+      <li><a href="/vacation-packages/europe/italy.html">Italy</a></li>
+      <li><a href="/vacation-packages/europe/netherlands.html">Netherlands</a></li>
+      <li><a href="/vacation-packages/mediterranean/sicily.html">Sicily</a></li>
+      <li><a href="/vacation-packages/europe/slovakia.html">Slovakia</a></li>
+      <li><a href="/vacation-packages/europe/spain.html">Spain</a></li>
+      <li><a href="/vacation-packages/europe/turkey.html">Turkey</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/mediterranean/">Mediterranean</a>
+    <ul>
+      <li><a href="/vacation-packages/europe/croatia.html">Croatia</a></li>
+      <li><a href="/vacation-packages/africa/egypt.html">Egypt</a></li>
+      <li><a href="/vacation-packages/europe/france.html">France</a></li>
+      <li><a href="/vacation-packages/mediterranean/greece.html">Greece</a></li>
+      <li><a href="/vacation-packages/europe/italy.html">Italy</a></li>
+      <li><a href="/vacation-packages/mediterranean/sicily.html">Sicily</a></li>
+      <li><a href="/vacation-packages/europe/spain.html">Spain</a></li>
+      <li><a href="/vacation-packages/europe/turkey.html">Turkey</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/middle-east/">Middle East</a>
+    <ul>
+      <li><a href="/vacation-packages/middle-east/dubai.html">Dubai</a></li>
+      <li><a href="/vacation-packages/africa/egypt.html">Egypt</a></li>
+      <li><a href="/vacation-packages/middle-east/jordan.html">Jordan</a></li>
+      <li><a href="/vacation-packages/europe/turkey.html">Turkey</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/south-america/">South America</a>
+    <ul>
+      <li><a href="/vacation-packages/south-america/argentina.html">Argentina</a></li>
+      <li><a href="/vacation-packages/south-america/chile.html">Chile</a></li>
+      <li><a href="/vacation-packages/south-america/ecuador.html">Ecuador</a></li>
+      <li><a href="/vacation-packages/south-america/galapagos.html">Galapagos</a></li>
+      <li><a href="/vacation-packages/south-america/patagonia.html">Patagonia</a></li>
+      <li><a href="/vacation-packages/south-america/peru.html">Peru</a></li>
+    </ul>
+  </li>
+  <li>
+    <a href="/vacation-packages/south-pacific/">South Pacific</a>
+    <ul>
+      <li><a href="/vacation-packages/south-pacific/australia.html">Australia</a></li>
+      <li><a href="/vacation-packages/south-pacific/new-zealand.html">New Zealand</a></li>
+    </ul>
+  </li>
+</ul>
+
+        </li>
+        <li>
+          <a href="/vacation-packages/">Tours &amp; Packages</a>
+          <ul>
+            <li><a href="/vacation-packages/escorted-tours.html">Fully Escorted Tours</a></li>
+            <li><a href="/vacation-packages/semi-escorted-tours.html">Partially Escorted Tours</a></li>
+            <li><a href="/vacation-packages/independent-packages.html">Independent Packages</a></li>
+            <li><a href="/vacation-packages/land-tours.html">Land Tour Packages</a></li>
+            <li><a href="/vacation-packages/sea-cruises.html">Sea Cruise Packages</a></li>
+            <li><a href="/vacation-packages/river-cruises.html">River Cruise Packages</a></li>
+
+            <li><a href="/vacation-packages/search.html">Search Packages</a></li>
+            <li><a href="/about/products.html">About Our Packages</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="/build-your-own/cruises/">Cruises</a>
+          <ul>
+            <li><a href="/build-your-own/cruises/">Independent Cruises</a>
+              <ul>
+                <li><a href="/build-your-own/cruises/">Search Cruises</a></li>
+                <li><a href="/build-your-own/cruises/cruise-lines.html">Cruise Lines</a></li>
+                <li><a href="/build-your-own/cruises/ports-north-america.html">Departure Ports</a></li>
+                <li><a href="/build-your-own/cruises/shore-excursions.html">Shore Excursions</a></li>
+              </ul>
+            </li>
+            <li><a href="/vacation-packages/?bySea=1&byRiver=1">Cruise Packages</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="/custom-group-travel/">Custom &amp; Group Travel</a>
+          <ul>
+            <li><a href="/custom-group-travel/">Create Your Own Package</a></li>
+            <li><a href="/sponsored/">Special Interest Tours</a></li>
+          </ul>
+        </li>
+        <li><a href="/hot-deals.html">Hot Deals</a>
+          <ul>
+            <li><a href="/hot-deals.html">This Week's Hot Deals</a></li>
+            <li><a href="/remove.html">Unsubscribe</a></li>
+          </ul>
+        </li>
+        <li><a href="/about/">About Us</a>
+          <ul>
+            <li><a href="/about/products.html">Our Products</a></li>
+            <li><a href="http://blog.friendlyplanet.com/">Our Blog</a></li>
+            <li><a href="/hot-deals.html">Weekly Hot Deals</a></li>
+            <li><a href="/remove.html">Unsubscribe</a></li>
+            <li><a href="https://www.friendlyplanet.com/gift-certificates.html">Gift Certificates</a></li>
+            <li><a href="/about/philanthropy.html">Philanthropy</a></li>
+            <li><a href="/about/careers.html">Careers</a></li>
+            <li><a href="/about/testimonials.html">Traveler Reviews</a></li>
+            <li><a href="/about/press.html">Press Room</a></li>
+            <li><a href="/about/privacy-security.html">Privacy &amp; Security</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="/faqs/">Help &amp; FAQs</a>
+          <ul>
+            <li><a href="/contact.html">Contact Us</a></li>
+            <li><a href="/faqs/faqs.html">General FAQs</a></li>
+            <li><a href="/faqs/booked.html">Booked Traveler FAQs</a></li>
+            <li><a href="/faqs/passports-visas.html">Passports &amp; Visas</a></li>
+            <li><a href="/travel-insurance/">Travel Insurance</a></li>
+            <li><a href="/terms/">Terms &amp; Conditions</a></li>
+            <li><a href="/facts/">Country Fast Facts</a></li>
+            <li><a href="https://www.friendlyplanet.com/reserve/payment.html">Make a Payment</a></li>
+            <li><a href="/faqs/find-roommate.html">Find a Roommate</a></li>
+            <li><a href="/faqs/travel-agents.html">Travel Agents</a></li>
+          </ul>
+        </li>  
+      </ul>
+      <div class="clear"></div>
+    </div>
+
+    <div id="contentWrapper">
+
+  <!--googleon: index-->
+
+      <div id="leftColumn">
+
+      <div id="pageContent">
+        <h1>File not found</h1>
+        <p><strong>We can't find the page you're looking for!</strong></p>
+        <p>It might have been removed, had its name changed, or become temporarily unavailable.</p>
+
+        <p>&raquo; <a href="http://www.searchtb.com/2013/04/%e5%85%b3%e4%ba%8e%e7%bc%93%e5%ad%98%ef%bc%88%e4%b8%8a%ef%bc%89.html">Return to the last page you were on</a></p>
+
+        <hr size="1" />
+        <h4>Search our site</h4>
+        <form method="get" action="/search.html">
+          <input type="text" name="q" value="avatar dcfe3eb05f1838031feb68762be67465 s 60 d http%3A%2F%2F1 gravatar com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60 r G" size="60" />
+          <input type="submit" value="search" class="btn" />
+        </form>
+        
+      </div>
+
+      </div>
+      <div id="rightColumn">
+
+      <div id="pageSidebar">
+
+<!--googleoff: index-->
+<div class="box nonprint">
+  <div class="sideButtons" id="packagesWidget">
+    <a href="/vacation-packages/">
+      <strong>Tours &amp; Packages</strong>
+      Our specialty for 30 years! Find one now:
+    </a>
+    <form action="/vacation-packages/" method="get">
+      
+      <img src="/media/template/world_map_small.png" width="250" height="123" border="0" alt="choose a region" id="regionsImg" usemap="#regionsMap" nopin="nopin" />
+      <label id="regionPicker">choose<br />a region</label>
+      <map name="regionsMap" id="regionsMap">
+        <area title="Europe" alt="Europe" href="/vacation-packages/europe/" shape="poly" coords="154,34,154,8,147,8,139,6,132,6,126,11,124,12,123,13,123,16,126,20,125,21,123,21,121,23,120,21,117,19,116,16,114,16,112,19,110,20,110,23,115,27,117,28,117,31,111,31,110,36,111,38,113,38,117,37,118,34,120,31,125,31,129,29,131,28,138,34,143,33,148,33,150,34,152,34,154,34" />
+        <area title="Mediterranean" alt="Mediterranean" href="/vacation-packages/mediterranean/" shape="poly" coords="150,34,143,33,138,34,131,28,125,31,121,31,118,34,117,37,113,38,113,42,119,42,126,40,127,43,132,45,137,48,140,45,145,45,148,46,150,43,151,40,150,34" />
+        <area title="Asia" alt="Asia" href="/vacation-packages/asia/" shape="poly" coords="153,34,153,7,181,4,227,8,235,14,229,17,232,19,232,24,230,39,224,43,217,44,220,55,224,65,223,68,228,72,236,75,243,76,240,82,234,81,221,82,208,80,199,68,201,65,200,58,197,57,194,51,192,52,186,57,188,65,187,67,183,64,179,53,174,49,176,41,167,33,153,34" />
+        <area title="Middle East" alt="Middle East" href="/vacation-packages/middle-east/" shape="poly" coords="151,34,151,39,148,45,156,60,163,58,174,48,176,41,167,33,151,34" />
+        <area title="Africa" alt="Africa" href="/vacation-packages/africa/" shape="poly" coords="119,42,112,42,109,46,105,52,105,60,112,68,122,67,127,69,127,74,130,81,128,87,134,103,141,104,148,95,158,95,161,89,161,83,154,82,153,76,161,67,162,61,156,62,148,46,140,45,137,48,127,43,126,40,119,42" />
+        <area title="Central America" alt="Central America" href="/vacation-packages/central-america/" shape="poly" coords="25,40,31,42,37,46,41,47,41,54,44,54,45,52,48,52,47,57,51,57,51,62,56,63,53,65,50,65,43,59,38,58,33,54,29,50,25,40" />
+        <area title="Caribbean" alt="Caribbean" href="/vacation-packages/caribbean/" shape="poly" coords="37,46,41,47,41,54,44,54,45,52,48,52,47,57,51,57,51,62,58,64,59,60,69,61,69,44,53,44" />
+        <area title="South America" alt="South America" href="/vacation-packages/south-america/" shape="poly" coords="55,65,59,61,70,62,83,74,91,78,86,92,72,110,71,118,75,123,68,123,63,114,61,89,57,87,51,78,41,72,55,65" />
+        <area title="South Pacific" alt="South Pacific" href="/vacation-packages/south-pacific/" shape="poly" coords="208,104,208,93,217,83,240,83,244,77,249,77,249,108,238,114" />
+      </map>
+
+      <label>or</label>
+      <select name="countryPage">
+        <option value="">choose a country or area</option>
+          <option value="/vacation-packages/south-america/argentina.html">Argentina</option>
+          <option value="/vacation-packages/south-pacific/australia.html">Australia</option>
+          <option value="/vacation-packages/europe/austria.html">Austria</option>
+          <option value="/vacation-packages/asia/bhutan.html">Bhutan</option>
+          <option value="/vacation-packages/asia/borneo.html">Borneo</option>
+          <option value="/vacation-packages/africa/botswana.html">Botswana</option>
+          <option value="/vacation-packages/asia/cambodia.html">Cambodia</option>
+          <option value="/vacation-packages/south-america/chile.html">Chile</option>
+          <option value="/vacation-packages/asia/china.html">China</option>
+          <option value="/vacation-packages/central-america/costa-rica.html">Costa Rica</option>
+          <option value="/vacation-packages/europe/croatia.html">Croatia</option>
+          <option value="/vacation-packages/caribbean/cuba.html">Cuba</option>
+          <option value="/vacation-packages/europe/czech-republic.html">Czech Republic</option>
+          <option value="/vacation-packages/middle-east/dubai.html">Dubai</option>
+          <option value="/vacation-packages/south-america/ecuador.html">Ecuador</option>
+          <option value="/vacation-packages/africa/egypt.html">Egypt</option>
+          <option value="/vacation-packages/europe/england.html">England</option>
+          <option value="/vacation-packages/europe/france.html">France</option>
+          <option value="/vacation-packages/south-america/galapagos.html">Galapagos</option>
+          <option value="/vacation-packages/europe/germany.html">Germany</option>
+          <option value="/vacation-packages/mediterranean/greece.html">Greece</option>
+          <option value="/vacation-packages/europe/hungary.html">Hungary</option>
+          <option value="/vacation-packages/europe/iceland.html">Iceland</option>
+          <option value="/vacation-packages/asia/india.html">India</option>
+          <option value="/vacation-packages/europe/ireland.html">Ireland</option>
+          <option value="/vacation-packages/europe/italy.html">Italy</option>
+          <option value="/vacation-packages/asia/japan.html">Japan</option>
+          <option value="/vacation-packages/middle-east/jordan.html">Jordan</option>
+          <option value="/vacation-packages/africa/kenya.html">Kenya</option>
+          <option value="/vacation-packages/asia/malaysia.html">Malaysia</option>
+          <option value="/vacation-packages/africa/namibia.html">Namibia</option>
+          <option value="/vacation-packages/asia/nepal.html">Nepal</option>
+          <option value="/vacation-packages/europe/netherlands.html">Netherlands</option>
+          <option value="/vacation-packages/south-pacific/new-zealand.html">New Zealand</option>
+          <option value="/vacation-packages/south-america/patagonia.html">Patagonia</option>
+          <option value="/vacation-packages/south-america/peru.html">Peru</option>
+          <option value="/vacation-packages/mediterranean/sicily.html">Sicily</option>
+          <option value="/vacation-packages/europe/slovakia.html">Slovakia</option>
+          <option value="/vacation-packages/africa/south-africa.html">South Africa</option>
+          <option value="/vacation-packages/europe/spain.html">Spain</option>
+          <option value="/vacation-packages/africa/tanzania.html">Tanzania</option>
+          <option value="/vacation-packages/asia/thailand.html">Thailand</option>
+          <option value="/vacation-packages/asia/tibet.html">Tibet</option>
+          <option value="/vacation-packages/europe/turkey.html">Turkey</option>
+          <option value="/vacation-packages/asia/vietnam.html">Vietnam</option>
+          <option value="/vacation-packages/africa/zimbabwe.html">Zimbabwe</option>
+
+      </select>
+      <br />
+      <label>or</label>
+      <select name="tourPage">
+        <option value="">choose a package</option>
+          <option value="/taste-of-china.html">A Taste of China</option>
+          <option value="/taste-of-ireland.html">A Taste of Ireland</option>
+          <option value="/taste-of-south-africa.html">A Taste of South Africa</option>
+          <option value="/taste-of-thailand.html">A Taste of Thailand</option>
+          <option value="/taste-of-turkey.html">A Taste of Turkey</option>
+          <option value="/taste-of-vietnam.html">A Taste of Vietnam</option>
+          <option value="/aegean-island-hopper.html">Aegean Greek Island Hopper with Athens</option>
+          <option value="/amazing-peru.html">Amazing Peru</option>
+          <option value="/athens-3-day-greek-isles-cruise.html">Athens &amp; 3 Day Greek Isles Cruise</option>
+          <option value="/athens-4-day-greek-isles-cruise.html">Athens &amp; 4 Day Greek Isles Cruise</option>
+          <option value="/athens-mykonos-cruise.html">Athens, Mykonos &amp; Greek Isles Cruise</option>
+          <option value="/beautiful-bhutan.html">Beautiful Bhutan</option>
+          <option value="/beijing-shanghai-express.html">Beijing &amp; Shanghai Express</option>
+          <option value="/beijing-tokyo.html">Beijing &amp; Tokyo: A Sale of Two Cities</option>
+          <option value="/best-of-china.html">Best of China &amp; Yangtze Cruise</option>
+          <option value="/best-egypt-nile-cruise.html">Best of Egypt &amp; Nile Cruise</option>
+          <option value="/best-india-nepal.html">Best of India &amp; Nepal</option>
+          <option value="/best-of-ireland.html">Best of Ireland</option>
+          <option value="/best-kenya-tanzania.html">Best of Kenya &amp; Tanzania Safari</option>
+          <option value="/best-new-zealand-australia.html">Best of New Zealand &amp; Australia</option>
+          <option value="/best-south-africa.html">Best of South Africa</option>
+          <option value="/best-of-turkey.html">Best of Turkey</option>
+          <option value="/best-of-vietnam-cambodia.html">Best of Vietnam &amp; Cambodia</option>
+          <option value="/borneo-adventure.html">Borneo Adventure</option>
+          <option value="/budapest-vienna-prague-rail.html">Budapest, Vienna &amp; Prague by Rail</option>
+          <option value="/captivating-costa-rica.html">Captivating Costa Rica</option>
+          <option value="/china-delight.html">China Delight</option>
+          <option value="/colors-of-cuba.html">Colors of Cuba</option>
+          <option value="/captivating-costa-rica-fly-drive.html">Costa Rica Fly &amp; Drive</option>
+          <option value="/costa-rica-fly-drive-tortuguero.html">Costa Rica Fly &amp; Drive with Tortuguero</option>
+          <option value="/costa-rica-pura-vida.html">Costa Rica Pura Vida</option>
+          <option value="/croatia-cruise-adventure.html">Croatia Cruise Adventure</option>
+          <option value="/cyclades-island-hopper.html">Cyclades Greek Island Hopper &amp; Athens</option>
+          <option value="/danube-delights.html">Danube Delights River Cruise</option>
+          <option value="/dazzling-dubai.html">Dazzling Dubai</option>
+          <option value="/dazzling-dubai-bangkok.html">Dazzling Dubai &amp; Bangkok</option>
+          <option value="/dazzling-dubai-cairo.html">Dazzling Dubai &amp; Cairo</option>
+          <option value="/dazzling-dubai-india-express.html">Dazzling Dubai &amp; India Express</option>
+          <option value="/dazzling-dubai-kenya-safari.html">Dazzling Dubai &amp; Kenya Safari</option>
+          <option value="/discover-croatia.html">Discover Croatia</option>
+          <option value="/discover-havana.html">Discover Havana</option>
+          <option value="/discover-ireland.html">Discover Ireland</option>
+          <option value="/discover-namibia.html">Discover Namibia</option>
+          <option value="/discover-spain.html">Discover Spain</option>
+          <option value="/ecuador-galapagos.html">Ecuador &amp; the Galapagos</option>
+          <option value="/exotic-borneo-bangkok.html">Exotic Borneo &amp; Bangkok</option>
+          <option value="/exotic-ecuador.html">Exotic Ecuador</option>
+          <option value="/exotic-ecuador-peru.html">Exotic Ecuador &amp; Peru</option>
+          <option value="/exotic-peru.html">Exotic Peru</option>
+          <option value="/inti-raymi-festival.html">Exotic Peru &amp; Inti Raymi Festival</option>
+          <option value="/galapagos-wildlife-discovery.html">Galapagos Islands Wildlife Discovery</option>
+          <option value="/greek-island-hopper.html">Greek Island Hopper</option>
+          <option value="/3-day-idyllic-cruise.html">Greek Isles &amp; 3 Day Idyllic Cruise</option>
+          <option value="/4-day-idyllic-cruise.html">Greek Isles &amp; 4 Day Idyllic Cruise</option>
+          <option value="/7-day-idyllic-cruise.html">Greek Isles &amp; 7 Day Idyllic Cruise</option>
+          <option value="/highlights-greece-turkey-cruise.html">Highlights of Greece &amp; Turkey Cruise</option>
+          <option value="/highlights-havana-varadero.html">Highlights of Havana &amp; Varadero</option>
+          <option value="/iceland-adventure.html">Iceland Adventure</option>
+          <option value="/incredible-italy.html">Incredible Italy</option>
+          <option value="/istanbul-athens-cruise.html">Istanbul, Athens &amp; 6 Day Cruise</option>
+          <option value="/italy-by-rail.html">Italy by Rail</option>
+          <option value="/japan-panorama.html">Japan Panorama</option>
+          <option value="/kenya-safari-express.html">Kenya Safari Express</option>
+          <option value="/kenya-wildlife-safari.html">Kenya Wildlife Safari</option>
+          <option value="/london-highclere-castle.html">London &amp; Downton Abbey</option>
+          <option value="/london-paris-by-rail.html">London &amp; Paris by Rail</option>
+          <option value="/patagonian-explorer-sea.html">Patagonian Explorer by Sea</option>
+          <option value="/peru-ecuador-galapagos.html">Peru, Ecuador &amp; the Galapagos</option>
+          <option value="/splendid-sicily.html">Splendid Sicily</option>
+          <option value="/splendors-europe-river-cruise.html">Splendors of Europe Christmas Markets River Cruise</option>
+          <option value="/taj-mahal-express.html">Taj Mahal Express</option>
+          <option value="/taj-mahal-express-pushkar.html">Taj Mahal Express &amp; Pushkar Camel Fair</option>
+          <option value="/tokyo-express.html">Tokyo Express</option>
+          <option value="/treasures-of-thailand.html">Treasures of Thailand</option>
+          <option value="/tuscany-fly-drive.html">Tuscany Fly &amp; Drive</option>
+
+      </select>
+      <div class="submitWrapper"><input type="submit" value="find packages" class="btn" /></div>
+    </form>
+  </div>
+</div>
+<!--googleon: index-->
+
+<!--googleoff: index-->
+<div class="box nonprint">
+  <ul class="sideButtons">
+
+    <li>
+      <a href="/custom-group-travel/" style="background-image:url(/media/gallery/icons/tour-bus.png)">
+        <strong>Custom &amp; Group Travel</strong> Create a trip with friends &amp; family, or join a special interest tour
+        </a>
+    </li>
+
+    <li>
+    <a href="/refer-a-friend.html" style="background-image:url(/media/gallery/icons/refer-a-friend.png)">
+      <strong>Refer a Friend</strong>
+      and you could both get $100 off your next tour (<span class="link">rules &amp; details</span>)
+    </a>
+    </li>
+
+    <li>
+      <a href="/about/testimonials.html" style="background-image:url(/media/gallery/icons/bullhorn.png)">
+        <strong>Traveler Reviews</strong> Read reviews or write your own
+      </a>
+    </li>
+
+    <li>
+      <a href="http://blog.friendlyplanet.com/" style="background-image:url(/media/gallery/icons/pencil.png)">
+        <strong>Our Blog</strong> Travel tips, hidden gems &amp; more
+      </a>
+    </li>
+
+  </ul>
+</div>
+
+<div class="box nonprint">
+  <ul class="sideButtons">
+    <li>
+      <blockquote style="background-image:url(/media/gallery/icons/heart.png)">
+        <strong>Follow Friendly Planet</strong> Share the love of travel
+      </blockquote>
+      <ul id="socialWidget">
+        <li id="like-btn"><fb:like href="http://www.facebook.com/FriendlyPlanetTravel" send="false" layout="button_count" width="90" show_faces="false" colorscheme="light" font="segoe ui"></fb:like></li>
+        <li id="plusone-btn"><g:plusone size="medium" annotation="none" href="http://www.friendlyplanet.com/"></g:plusone></li>
+        <li id="fb-btn"><a href="http://www.facebook.com/FriendlyPlanetTravel" target="_blank" title="Friendly Planet on Facebook"><img src="/media/template/facebook-button.png" alt="Facebook" width="28" height="28" border="0" /></a></li>
+        <li id="pinterest-btn"><a href="http://pinterest.com/friendlyplanet1/" target="_blank" title="Friendly Planet on Pinterst"><img src="/media/template/pinterest-button.png" alt="Pinterest" width="28" height="28" border="0" /></a></li>
+        <li id="youtube-btn"><a href="https://www.youtube.com/user/FriendlyPlanetTravel" target="_blank" title="Friendly Planet on YouTube"><img src="/media/template/youtube-button.png" alt="YouTube" width="28" height="28" border="0" /></a></li>
+        <li id="twitter-btn"><a href="https://twitter.com/FriendlyPlanet" class="twitter-follow-button" data-show-count="false" title="Follow Friendly Planet on Twitter">Follow @FriendlyPlanet</a></li>
+      </ul>
+      <div class="clear"></div>
+    </li>
+  </ul>
+</div>
+<!--googleon: index-->
+
+      </div>
+
+    </div>
+
+      <div class="clear"></div>
+    </div>
+  <!--googleoff: index-->
+    <div id="footer">
+      <ul class="footerMenu">
+        <li><a href="/">Home</a>
+        <li><a href="/vacation-packages/regions.html">Destinations</a>
+        <li><a href="/vacation-packages/">Tours &amp; Packages</a>
+          <ul>
+            <li><a href="/vacation-packages/escorted-tours.html">Fully Escorted Tours</a></li>
+            <li><a href="/vacation-packages/semi-escorted-tours.html">Partially Escorted Tours</a></li>
+            <li><a href="/vacation-packages/independent-packages.html">Independent Packages</a></li>
+            <li><a href="/vacation-packages/land-tours.html">Land Tour Packages</a></li>
+            <li><a href="/vacation-packages/sea-cruises.html">Sea Cruise Packages</a></li>
+            <li><a href="/vacation-packages/river-cruises.html">River Cruise Packages</a></li>
+
+            <li><a href="/vacation-packages/search.html">Search Packages</a></li>
+            <li><a href="/about/products.html">About Our Packages</a></li>
+          </ul>
+        </li>
+      </ul>
+      <ul class="footerMenu">
+        <li><a href="/build-your-own/cruises/">Cruises</a>
+          <ul>
+            <li><a href="/build-your-own/cruises/">Search Cruises</a></li>
+            <li><a href="/build-your-own/cruises/cruise-lines.html">Our Cruise Lines</a></li>
+            <li><a href="/build-your-own/cruises/ports-north-america.html">Departure Ports</a></li>
+            <li><a href="/build-your-own/cruises/shore-excursions.html">Shore Excursions</a></li>
+          </ul>
+        </li>
+        <li><a href="/custom-group-travel/">Custom &amp; Group Travel</a>
+          <ul>
+            <li><a href="/custom-group-travel/">Create Your Own Package</a></li>
+            <li><a href="/sponsored/">Special Interest Tours</a></li>
+          </ul>
+        </li>
+      </ul>
+      <ul class="footerMenu">
+        <li><a href="/about/">About Us</a>
+          <ul>
+            <li><a href="/about/products.html">Our Products</a></li>
+            <li><a href="http://blog.friendlyplanet.com/">Our Blog</a></li>
+            <li><a href="/hot-deals.html">Weekly Hot Deals</a></li>
+            <li><a href="/remove.html">Unsubscribe</a></li>
+            <li><a href="https://www.friendlyplanet.com/gift-certificates.html">Gift Certificates</a></li>
+            <li><a href="/about/philanthropy.html">Philanthropy</a></li>
+            <li><a href="/about/careers.html">Careers</a></li>
+            <li><a href="/about/testimonials.html">Traveler Reviews</a></li>
+            <li><a href="/about/press.html">Press Room</a></li>
+            <li><a href="/about/privacy-security.html">Privacy &amp; Security</a></li>
+          </ul>
+        </li>
+      </ul>
+      <ul class="footerMenu">
+        <li><a href="/faqs/">Travel &amp; Booking Help</a>
+          <ul>
+            <li><a href="/contact.html">Contact Us</a></li>
+            <li><a href="/faqs/faqs.html">General FAQs</a></li>
+            <li><a href="/faqs/booked.html">Booked Travelers FAQs</a></li>
+            <li><a href="/faqs/passports-visas.html">Passports &amp; Visas</a></li>
+            <li><a href="/travel-insurance/">Travel Insurance</a></li>
+            <li><a href="/terms/">Terms &amp; Conditions</a></li>
+            <li><a href="/facts/">Country Fast Facts</a></li>
+            <li><a href="https://www.friendlyplanet.com/reserve/payment.html">Make a Payment</a></li>
+            <li><a href="/faqs/find-roommate.html">Find a Roommate</a></li>
+            <li><a href="/faqs/travel-agents.html">Travel Agents</a></li>
+          </ul>
+        </li>
+      </ul>
+      <ul id="trustWidget">
+        <li class="asta"><a href="http://www.asta.org/" target="_blank" title="Member, American Society of Travel Agents"><img src="/media/template/home/asta_logo.png" width="88" height="47" alt="American Society of Travel Agents" border="0" class="mouseover" /></a></li>
+        <li class="iatan"><a href="http://www.iatan.org" target="_blank" title="Member, International Airlines Travel Agent Network"><img src="/media/template/home/iatan_logo.png" width="53" height="46" alt="International Airlines Travel Agent Network" border="0" class="mouseover" /></a></li>
+        <li class="clia"><a href="http://www.cruising.org/" target="_blank" title="Member, Cruise Lines International Association, Inc."><img src="/media/template/home/clia_logo.png" width="60" height="47" alt="Cruise Lines International Association, Inc." border="0" class="mouseover" /></a></li>
+        <li class="dnb"><a href="http://www.dnb.com/" target="_blank" title="Dun &amp; Bradstreet"><img src="/media/template/home/db_logo.png" width="43" height="43" alt="Dun &amp; Bradstreet" border="0" class="mouseover" /></a></li>
+        <li class="bbb"><a href="http://www.bbb.org/washington-dc-eastern-pa/business-reviews/travel-agencies-and-bureaus/friendly-planet-travel-inc-in-jenkintown-pa-80019483/" target="_blank" title="Better Business Bureau Accredited: Rating A+"><img src="/media/template/home/bbb_logo.png" alt="Better Business Bureau Accredited: Rating A+" width="54" height="111" border="0" class="mouseover" /></a></li>
+      </ul>
+      <hr />
+<p id="footerDisclaimer">* Prices are per person, based on double occupancy. A limited quantity of single-occupancy rooms or cabins are available for an additional charge. Prices may include an early booking discount and/or coupon code discount, available for a limited time. Prices include <a rel="shadowbox;height=410;width=510" href="http://1.gravatar.com/terms/taxes.html" target="_blank">Airline Taxes, Fees &amp; Sept. 11th Security Fee</a> (for packages that include airfare), but do not include extensions, optional excursions and other optional items, <a href="/faqs/baggage-limits.html">excess baggage fees</a>, or <a href="/faqs/advance-seat-reservations.html">advance seat reservations</a>, unless otherwise noted. Flights from some cities may be an additional charge. Prices and availability are subject to change. If upon receipt of your reservation, we are unable to confirm any component you selected, you may cancel your reservation and receive a full refund of your deposit, which is otherwise non-refundable. <a rel="shadowbox;height=680;width=570" href="http://1.gravatar.com/faqs/package-prices.html" target="_blank">More about our prices</a>.<br /><br />We do our best to provide accurate and up-to-date information on our site, but errors may occur. Please confirm prices and details with us prior to making a reservation.</p>
+    </div>
+    <!--googleon: index-->
+  </div>
+
+<link type="text/css" rel="stylesheet" href="/css/plugins.20150416.css" />
+<script type="text/javascript" src="/js/plugins.20150416.min.js"></script>
+
+<script type="text/javascript" src="/js/layout.20150418.min.js"></script>
+<script type="text/javascript">
+var cookie_domain   = '';
+var cookie_path     = '/';
+var base_path       = '/';
+var js_path         = '/js/';
+var img_path        = '/media/template/'
+var slideshow_id    = '';
+var dev_server      = false;
+var framed_content  = false;
+var no_frameset_bar = false;
+var signup_source   = '';
+var track_tour_name = '';
+
+modalSubscribe.popup();
+
+</script>
+
+<script type="text/javascript" src="/js/tracking.20150504.min.js"></script>
+<noscript>
+  <div style="display:inline">
+    <img height="1" width="1" alt="" style="border-style:none" src="//googleadservices.com/pagead/viewthroughconversion/1023547865/?value=1.00&amp;label=uCEUCO-V7AcQ2bOI6AM&amp;guid=ON&amp;script=0" />
+    <img height="1" width="1" alt="" style="display:none" src="https://www.facebook.com/tr?id=602499136528306&amp;ev=PixelInitialized" />
+    <img height="1" width="1" alt="" style="display:none" src="https://analytics.twitter.com/i/adsct?txn_id=l5b5i&p_id=Twitter" />
+    <img height="1" width="1" alt="" style="display:none" src="//t.co/i/adsct?txn_id=l5b5i&p_id=Twitter" />
+  </div>
+</noscript>
+
+<script type="text/javascript">
+
+</script>
+
+</body>
+</html>

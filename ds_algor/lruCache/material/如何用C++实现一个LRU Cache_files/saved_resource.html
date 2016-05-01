@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<!-- saved from url=(0370)http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default -->
+<html lang="en" dir="ltr" class="js no-touch localstorage sessionstorage contenteditable use-opacity-transitions"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Disqus Comments</title>
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    
+    
+    <style>
+        html {
+            overflow: hidden;
+        }
+
+        
+    </style>
+
+<link rel="stylesheet" href="http://a.disquscdn.com/next/embed/styles/lounge.e4ee971bb7c5e2a1f8f46522fb7bc4d7.css"><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="remote/config" src="config.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="common.bundle" src="common.bundle.536cf202f0e5fab40eb6ae4861fb6562.js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="lounge.bundle" src="lounge.bundle.55e4fca2af24b05f16f1a6fd295c5ea9.js"></script><style id="css_1453168522328"></style><!--<base target="_parent">--><base href="." target="_parent"><link rel="preconnect" href="http://tempest.services.disqus.com/"><link rel="dns-prefetch" href="http://tempest.services.disqus.com/"><link rel="stylesheet" href="http://a.disquscdn.com/next/embed/styles/discovery.2f3e6d9b40187bc008976bc1b207157b.css"><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="ga" src="ga(1).js"></script><script type="text/javascript" charset="utf-8" async="" data-requirecontext="_" data-requiremodule="discovery/main" src="discovery.bundle.4e4fbe15bbf03b66800dc28eead62881.js"></script></head>
+<body>
+    
+
+    
+    <!--[if lt IE 10]><p style="color: #fff; background-color: #f05f70; padding: 10px; margin-top: 20px;">
+        You're using a browser that Disqus plans to stop supporting soon. For more information, visit our list of 
+        <a href="https://help.disqus.com/customer/portal/articles/466228-which-browsers-does-disqus-work-with-" style="color: #fff; text-decoration: underline;">supported browsers</a>
+        and consider upgrading.
+    </p><![endif]-->
+    <div id="error" style="display:none; text-align: center">
+        <p>We were unable to load Disqus. If you are a moderator please see our <a href="https://docs.disqus.com/help/83/"> troubleshooting guide</a>. </p>
+    </div>
+
+    
+    <script type="text/json" id="disqus-forumData">{"session":{"canModerate":false,"audienceSyncVerified":false,"mustVerify":false,"canReply":true,"mustVerifyEmail":false},"features":{},"forum":{"category":null,"description":"","founder":"36655994","settings":{"supportLevel":0,"adsDRNativeEnabled":false,"disable3rdPartyTrackers":false,"moderatorText":"","ssoRequired":false,"linkAffiliationEnabled":false,"hasCustomAvatar":false,"organicDiscoveryEnabled":false,"colorScheme":"auto","discoveryMax":false,"discoverySettingsUrl":"https://hawstein.disqus.com/admin/settings/ads/","adsVideoEnabled":false,"allowAnonPost":true,"allowMedia":true,"promotedDiscoveryEnabled":false,"allowAnonVotes":false,"mustVerify":false,"mustVerifyEmail":false,"discoveryVariant":null,"adsBannerEnabled":false,"audienceSyncEnabled":false,"typeface":"auto","discoveryLocked":false,"discoveryThumbnailsEnabled":false,"isVIP":false},"url":"http://hawstein.com/","guidelines":null,"favicon":{"permalink":"http://disqus.com/api/forums/favicons/hawstein.jpg","cache":"//a.disquscdn.com/uploads/forums/197/5102/favicon.png"},"language":"en","avatar":{"small":{"permalink":"http://disqus.com/api/forums/avatars/hawstein.jpg?size=32","cache":"//a.disquscdn.com/1452820575/images/noavatar32.png"},"large":{"permalink":"http://disqus.com/api/forums/avatars/hawstein.jpg?size=92","cache":"//a.disquscdn.com/1452820575/images/noavatar92.png"}},"pk":"1975102","signedUrl":"http://disq.us/?url=http%3A%2F%2Fhawstein.com%2F&key=jY5NNmkfZy3oQiAg6vo2bw","raw_guidelines":null,"id":"hawstein","channel":null,"name":"Hawstein's Blog"}}</script>
+
+    
+    <script type="text/json" id="disqus-threadData">{"cursor":{"hasPrev":false,"prev":null,"total":1,"hasNext":false,"next":"1:0:0"},"code":0,"response":{"lastModified":1432592273,"posts":[{"forum":"hawstein","parent":null,"isApproved":true,"author":{"username":"kissweb","about":"\u7801\u7816","name":"\u661f\u661fbigxing","disable3rdPartyTrackers":false,"isPowerContributor":false,"isAnonymous":false,"rep":1.248596,"profileUrl":"https://disqus.com/by/kissweb/","url":"http://www.cnblogs.com/starlion","reputation":1.248596,"location":"\u5e7f\u4e1c","isPrivate":false,"signedUrl":"http://disq.us/?url=http%3A%2F%2Fwww.cnblogs.com%2Fstarlion&key=Vu3w8hdvPn3_J8a2f9UUFQ","isPrimary":true,"joinedAt":"2014-07-04T10:10:14","id":"113116254","avatar":{"small":{"permalink":"http://disqus.com/api/users/avatars/kissweb.jpg","cache":"//a.disquscdn.com/uploads/users/11311/6254/avatar32.jpg?1431055222"},"isCustom":true,"permalink":"http://disqus.com/api/users/avatars/kissweb.jpg","cache":"//a.disquscdn.com/uploads/users/11311/6254/avatar92.jpg?1431055222","large":{"permalink":"http://disqus.com/api/users/avatars/kissweb.jpg","cache":"//a.disquscdn.com/uploads/users/11311/6254/avatar92.jpg?1431055222"}}},"media":[],"isDeleted":false,"isFlagged":false,"dislikes":0,"raw_message":"\u5411\u4f5c\u8005\u5b66\u4e60\u554a\uff0c\u8fd9\u91cc\u6709\u597d\u591a\u7b97\u6cd5\u7684\u9898\u76ee\u548c\u89e3\u7b54","createdAt":"2015-03-03T07:58:54","id":"1884756958","thread":"3397426627","depth":0,"numReports":0,"isDeletedByAuthor":false,"likes":0,"isEdited":false,"message":"\u003cp>\u5411\u4f5c\u8005\u5b66\u4e60\u554a\uff0c\u8fd9\u91cc\u6709\u597d\u591a\u7b97\u6cd5\u7684\u9898\u76ee\u548c\u89e3\u7b54\u003c/p>","isSpam":false,"isHighlighted":false,"points":0}],"thread":{"feed":"https://hawstein.disqus.com/clru_cache_how_to_implement_an_lru_cache_in_c/latest.rss","identifiers":[],"dislikes":0,"likes":0,"message":"","id":"3397426627","isDeleted":false,"category":"2007381","author":"36655994","userScore":0,"userSubscription":false,"isSpam":false,"signedLink":"http://disq.us/?url=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&key=NVM-Vpau_n9zb2gT64eA3g","createdAt":"2015-01-07T04:26:37","hasStreaming":false,"raw_message":"","isClosed":false,"link":"http://www.hawstein.com/posts/lru-cache-impl.html","slug":"clru_cache_how_to_implement_an_lru_cache_in_c","forum":"hawstein","clean_title":"\u5982\u4f55\u7528C++\u5b9e\u73b0\u4e00\u4e2aLRU Cache How to implement an LRU Cache in C","posts":1,"moderators":[36655994],"title":" \u5982\u4f55\u7528C++\u5b9e\u73b0\u4e00\u4e2aLRU Cache How to implement an LRU Cache in C ++ ","highlightedPost":null}},"order":"popular"}</script>
+
+    
+
+    <div id="fixed-content"></div>
+
+
+    
+        
+        <!--[if lte IE 8]>
+<script src="//a.disquscdn.com/1452820575/build/vendor/ie8.js"></script>
+<![endif]-->
+<!--[if IE 9]>
+<script src="//a.disquscdn.com/1452820575/build/vendor/ie9.js"></script>
+<![endif]-->
+
+        
+<script type="text/json" id="disqus-urls">{
+    "root":"//disqus.com",
+    "next":"//a.disquscdn.com/next/current/embed"
+}</script>
+
+        <script src="lounge.load.f4358b2b48f0b55d12f3a48c5ea9cd8d.js" id="bootstrap-script" data-app="lounge" async=""></script>
+    
+
+
+<div id="layout" data-tracking-area="layout">
+
+<div id="placement-top" data-tracking-area="discovery-north"></div>
+
+<div id="onboard" data-tracking-area="onboard"></div>
+
+<div id="highlighted-post" data-tracking-area="highlighted" class="highlighted-post" style="display: none;"></div>
+
+<div id="global-alert"></div>
+
+<header id="main-nav" data-tracking-area="main-nav">
+<nav class="nav nav-primary">
+<ul>
+<li class="tab-conversation active" data-role="post-count"><a class="publisher-nav-color">
+<span class="comment-count">
+1 comment
+</span>
+
+<span class="comment-count-placeholder">
+Comments
+</span>
+</a>
+</li>
+<li class="tab-community">
+<a href="https://disqus.com/home/forums/hawstein/" class="publisher-nav-color" data-action="community-sidebar" data-forum="hawstein" id="community-tab">
+<span class="community-name">
+<strong>Hawstein's Blog</strong>
+
+</span>
+
+<strong class="community-name-placeholder">Community</strong>
+</a>
+</li>
+<li class="dropdown user-menu" data-role="logout"><a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" class="dropdown-toggle" data-toggle="dropdown">
+<span class="dropdown-toggle-wrapper">
+
+<span>
+Login
+</span>
+
+</span> <span class="caret"></span>
+</a>
+<ul class="dropdown-menu">
+
+
+<li>
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="auth:disqus">Disqus</a>
+</li>
+<li>
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="auth:facebook">Facebook</a>
+</li>
+<li>
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="auth:twitter">Twitter</a>
+</li>
+<li>
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="auth:google">Google</a>
+</li>
+
+
+
+</ul>
+</li>
+<li class="notification-menu unread" data-role="notification-menu"><a href="https://disqus.com/home/inbox/" class="notification-container" data-action="home" data-home-path="home/inbox/">
+<span class="notification-icon icon-comment" aria-hidden=""></span>
+<span class="notification-count" data-role="notification-count">1</span>
+</a>
+</li>
+</ul>
+</nav>
+</header>
+
+<section id="conversation" data-role="main" data-tracking-area="main">
+<div class="nav nav-secondary" data-tracking-area="secondary-nav">
+<ul>
+<li id="recommend-button" class="recommend dropdown">
+<div class="thread-likes"><a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="recommend" title="Recommend this discussion" class="dropdown-toggle ">
+<span class="icon-heart"></span>
+<span class="label label-default">Recommend</span>
+<span class="label label-recommended">Recommended</span>
+</a>
+<ul class="dropdown-menu coachmark">
+<li>
+<h2>Discussion Recommended!</h2>
+<p>Recommending means this is a discussion worth sharing. It gets shared to your followers' Disqus feeds, and gives the creator kudos!</p>
+<a href="http://disqus.com/home/?utm_source=disqus_embed&utm_content=recommend_btn" class="btn btn-primary" target="_blank">
+ Find More Discussions 
+</a>
+</li>
+</ul>
+</div></li>
+<li id="thread-share-menu" class="dropdown share-menu hidden-sm"><a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" class="dropdown-toggle" data-toggle="dropdown" title="Share">
+<span class="icon-export"></span>
+<span class="label">Share</span>
+</a>
+<ul class="share-menu dropdown-menu">
+<li class="share">Share this discussion on
+<ul>
+<li class="twitter">
+<a data-action="share:twitter" href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#">Twitter</a>
+</li>
+<li class="facebook">
+<a data-action="share:facebook" href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#">Facebook</a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li data-role="post-sort" class="dropdown sorting pull-right">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" class="dropdown-toggle" data-toggle="dropdown">
+Sort by Best
+
+
+<span class="caret"></span>
+</a>
+<ul class="dropdown-menu pull-right">
+<li class="selected">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="sort" data-sort="popular">Best<i aria-hidden="true" class="icon-checkmark"></i></a>
+</li>
+
+<li>
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="sort" data-sort="desc">Newest<i aria-hidden="true" class="icon-checkmark"></i></a>
+</li>
+
+<li>
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="sort" data-sort="asc">Oldest<i aria-hidden="true" class="icon-checkmark"></i></a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<div id="posts">
+<div id="form"><form class="reply">
+<div class="postbox">
+<div role="alert"></div>
+<div class="avatar">
+<span class="user">
+<img data-role="user-avatar" src="noavatar92.4549c5353ccf103d32a8b81a856576ed.png" alt="Avatar">
+</span>
+</div>
+
+<div class="textarea-wrapper" data-role="textarea" dir="auto"><div><span class="placeholder">Join the discussion…</span><div class="textarea" tabindex="0" role="textbox" aria-multiline="true" contenteditable="true" data-role="editable" aria-label="Join the discussion…" style="overflow: auto; max-height: 350px;"><p><br></p></div><div style="display: none;"><ul class="suggestions">
+<li class="header">
+<h5>in this conversation</h5>
+</li>
+</ul>
+</div></div>
+<div data-role="drag-drop-placeholder" class="media-drag-hover" style="display: none">
+<div class="drag-text">
+⬇ Drag and drop your images here to upload them.
+</div>
+</div>
+<div class="media-preview empty" data-role="media-preview"><ul data-role="media-legacy-list"></ul>
+<ul data-role="media-progress-list"></ul>
+<ul data-role="media-rich-list"></ul>
+<div class="media-expanded empty" data-role="media-preview-expanded">
+<img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-role="media-preview-expanded-image" alt="Media preview placeholder">
+</div>
+</div>
+<div class="edit-alert" role="postbox-alert"></div>
+<div class="post-actions">
+<ul class="wysiwyg">
+<li data-role="media-uploader"><a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" tabindex="-1" data-action="attach" class="attach" title="Upload Images"><span>Attach</span></a>
+<input type="file" data-role="media-upload" tabindex="-1" accept="image/*">
+</li>
+</ul>
+</div>
+</div>
+
+<div data-role="login-form"><div><section class="auth-section logged-out">
+<div class="connect">
+<h6>Log in with</h6>
+<ul data-role="login-menu" class="services login-buttons">
+
+
+<li class="auth-disqus">
+<button type="button" data-action="auth:disqus" title="Disqus"><i class="icon-disqus"></i></button>
+</li>
+<li class="auth-facebook">
+<button type="button" data-action="auth:facebook" title="Facebook"><i class="icon-facebook-circle"></i></button>
+</li>
+<li class="auth-twitter">
+<button type="button" data-action="auth:twitter" title="Twitter"><i class="icon-twitter-circle"></i></button>
+</li>
+<li class="auth-google">
+<button type="button" data-action="auth:google" title="Google"><i class="icon-google-plus-circle"></i></button>
+</li>
+</ul>
+</div>
+<div class="guest">
+<h6 class="guest-form-title">
+<span class="register-text"> or sign up with Disqus </span>
+<span class="guest-text"> or pick a name </span>
+</h6>
+
+<div class="what-is-disqus help-icon">
+<div id="rules" class="tooltip show">
+<h3>Disqus is a discussion network</h3>
+<ul>
+<li><span>Disqus never moderates or censors. The rules on this community are its own.</span></li>
+<li><span>Your email is safe with us. It's only used for moderation and optional notifications.</span></li>
+<li><span>Don't be a jerk or do anything illegal. Everything is easier that way.</span></li>
+</ul>
+<p class="clearfix"><a href="https://docs.disqus.com/kb/terms-and-policies/" class="btn btn-small" target="_blank">Read full terms and conditions</a></p>
+</div>
+</div>
+
+<p class="input-wrapper">
+<input dir="auto" type="text" placeholder="Name" name="display_name" id="view36_display_name" maxlength="30">
+</p>
+
+<div class="guest-details " data-role="guest-details">
+<p class="input-wrapper">
+<input dir="auto" type="email" placeholder="Email" name="email" id="view36_email">
+</p>
+
+<p class="input-wrapper">
+<input dir="auto" type="password" class="register-text" placeholder="Password" name="password" id="view36_password">
+</p>
+
+<div class="acceptance-wrapper register-text">
+By signing up, you agree to the Disqus <a target="_blank" href="https://help.disqus.com/customer/portal/articles/1753105-basic-rules-for-disqus-powered-profiles-and-discussions">Basic Rules</a>, <a target="_blank" href="https://help.disqus.com/customer/portal/articles/466260-terms-of-service">Terms of Service</a>, and <a target="_blank" href="https://help.disqus.com/customer/portal/articles/466259-privacy-policy">Privacy Policy</a>.
+</div>
+<div class="acceptance-wrapper guest-text">
+By posting, you agree to the Disqus <a target="_blank" href="https://help.disqus.com/customer/portal/articles/1753105-basic-rules-for-disqus-powered-profiles-and-discussions">Basic Rules</a>, <a target="_blank" href="https://help.disqus.com/customer/portal/articles/466260-terms-of-service">Terms of Service</a>, and <a target="_blank" href="https://help.disqus.com/customer/portal/articles/466259-privacy-policy">Privacy Policy</a>.
+</div>
+
+<div class="guest-checkbox">
+<label>
+<input type="checkbox" name="author-guest">
+I'd rather post as a guest
+</label>
+</div>
+
+<div class="proceed" data-role="submit-btn-container">
+<button type="submit" class="btn submit" aria-label="Post"><span class="icon-proceed"></span><div class="spinner"></div></button>
+<button type="submit" class="btn next" aria-label="Next"><span class="icon-proceed"></span><div class="spinner"></div></button>
+</div>
+</div>
+</div>
+</section>
+
+</div></div>
+</div>
+</form></div>
+
+<button class="alert realtime" style="display: none;" data-role="realtime-notification">
+</button>
+
+<div id="no-posts" style="display: none;"></div>
+
+<ul id="post-list" class="post-list"><li class="post" id="post-1884756958"><div role="alert"></div>
+<div data-role="post-content" class="post-content">
+<ul class="post-menu dropdown" data-role="menu">
+<li class="collapse">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="collapse" title="Collapse"><span>−</span></a>
+</li>
+<li class="expand">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="collapse" title="Expand"><span>+</span></a>
+</li>
+
+<li class="" role="menu">
+<a class="dropdown-toggle" href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="flag" data-role="flag" title="Flag as inappropriate">
+<i aria-hidden="true" class="icon icon-flag"></i>
+</a>
+</li>
+</ul>
+<div class="indicator"></div>
+
+<div class="avatar hovercard">
+<a href="https://disqus.com/by/kissweb/" class="user" data-action="profile" data-username="kissweb">
+<img data-role="user-avatar" data-user="113116254" src="avatar92.jpg" alt="Avatar">
+</a>
+</div>
+<div class="post-body">
+<header>
+<span class="post-byline">
+<span class="author publisher-anchor-color"><a href="https://disqus.com/by/kissweb/" data-action="profile" data-username="kissweb" data-role="username">星星bigxing</a></span>
+
+</span>
+
+<span class="post-meta">
+<span class="bullet time-ago-bullet" aria-hidden="true">•</span>
+
+<a href="http://www.hawstein.com/posts/lru-cache-impl.html#comment-1884756958" data-role="relative-time" class="time-ago" title="Tuesday, March 3, 2015 3:58 PM">a year ago</a>
+</span>
+
+</header>
+
+<div class="post-body-inner">
+<div class="post-message-container" data-role="message-container">
+<div class="publisher-anchor-color" data-role="message-content">
+<div class="post-message " data-role="message" dir="auto">
+<p>向作者学习啊，这里有好多算法的题目和解答</p>
+</div>
+
+<span class="post-media"><ul data-role="post-media-list"></ul></span>
+</div>
+</div>
+<a class="see-more hidden" title="see more" data-action="see-more">see more</a>
+</div>
+
+<footer>
+<menu>
+
+<li class="voting" data-role="voting">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" class="vote-up  count-0" data-action="upvote" title="Vote up">
+
+<span class="updatable count" data-role="likes">0</span>
+<span class="control"><i aria-hidden="true" class="icon icon-arrow-2"></i></span>
+</a>
+<span role="button" class="vote-down  count-0" data-action="downvote" title="Vote down">
+
+<span class="control"><i aria-hidden="true" class="icon icon-arrow"></i></span>
+</span>
+</li>
+<li class="bullet" aria-hidden="true">•</li>
+
+
+<li class="reply" data-role="reply-link">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="reply">
+<i class="icon icon-mobile icon-reply"></i><span class="text">Reply</span></a></li>
+<li class="bullet" aria-hidden="true">•</li>
+
+
+<li class="share">
+<a class="toggle"><i class="icon icon-mobile icon-share"></i><span class="text">Share ›</span></a>
+<ul>
+<li class="twitter"><a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="share:twitter">Twitter</a></li>
+<li class="facebook"><a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="share:facebook">Facebook</a></li>
+<li class="link"><a href="http://www.hawstein.com/posts/lru-cache-impl.html#comment-1884756958">Link</a></li>
+</ul>
+</li>
+
+<li class="realtime" data-role="realtime-notification:1884756958">
+<span style="display:none;" class="realtime-replies"></span>
+<a style="display:none;" href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" class="btn btn-small"></a>
+</li>
+
+</menu>
+</footer>
+</div>
+
+<div data-role="blacklist-form"></div>
+<div class="reply-form-container" data-role="reply-form"></div>
+</div>
+
+<ul data-role="children" class="children"></ul>
+
+</li></ul>
+
+<div class="load-more" data-role="more" style="display: none;">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" data-action="more-posts" class="btn">Load more comments</a>
+</div>
+</div>
+
+</section>
+
+<div id="placement-bottom" data-tracking-area="discovery-south"></div>
+
+<div id="footer" data-tracking-area="footer">
+<ul class="disqus-footer">
+<li class="logo disqus-footer__item"><a href="https://disqus.com/" rel="nofollow" title="Powered by Disqus">Powered by Disqus</a></li>
+<li id="thread-subscribe-button" class="email disqus-footer__item"> 
+<div class="default">
+<a href="http://disqus.com/embed/comments/?base=default&version=f4358b2b48f0b55d12f3a48c5ea9cd8d&f=hawstein&t_u=http%3A%2F%2Fwww.hawstein.com%2Fposts%2Flru-cache-impl.html&t_d=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&t_t=%0A%20%20%E5%A6%82%E4%BD%95%E7%94%A8C%2B%2B%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AALRU%20Cache%0A&s_o=default#" rel="nofollow" data-action="subscribe" title="Subscribe and get email updates from this discussion"><i aria-hidden="true" class="icon icon-mail"></i><span class="clip">Subscribe</span> <i aria-hidden="true" class="icon icon-checkmark"></i></a>
+</div>
+<div class="form">
+<div class="input-wrapper"><input id="thread-subscribe-email" type="email" placeholder="yourname@email.com"></div>
+</div>
+</li>
+<li class="install disqus-footer__item">
+<a href="https://publishers.disqus.com/engage?utm_source=hawstein&utm_medium=Disqus-Footer" rel="nofollow" target="_blank">
+<i aria-hidden="true" class="icon icon-disqus"></i>
+<span class="clip hidden-sm">Add Disqus to your site</span>
+<span class="clip visible-sm hidden-xs">Add Disqus</span>
+<span class="clip visible-xs">Add</span>
+</a>
+</li>
+<li class="privacy disqus-footer__item">
+<a href="https://help.disqus.com/customer/portal/articles/1657951?utm_source=disqus&utm_medium=embed-footer&utm_content=privacy-btn" rel="nofollow" target="_blank">
+<i aria-hidden="true" class="icon icon-lock"></i>
+<span class="clip">Privacy</span>
+</a>
+</li>
+</ul>
+</div>
+</div></body></html>
