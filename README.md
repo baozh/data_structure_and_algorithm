@@ -23,12 +23,12 @@ Alibaba Oceanbase, TFS, Tair
 Facebook rocksdb  
 TiDB  
 ScyllaDB  
-hypertable  
-sequoiaDb  
+Hypertable  
+SequoiaDB  
 Sector  
 kfs-类gfs  
-lizardfs  
-reborn  
+Lizardfs  
+Reborn  
 JD dtc  
-jimDB  
-beansDb
+JimDB  
+BeansDB
